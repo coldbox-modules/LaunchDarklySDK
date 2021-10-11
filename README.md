@@ -18,11 +18,11 @@ If your allergic to CLI's, you can snag the code from Github or Forgebox, but it
 
 Since I hate using javaloader in The Year of Our Lord 2021, you must manually add the jars to your `Application.cfc`'s `this.javaSettings`.  This can be done pretty quickly with a little snippet like so (adjust the paths as neccessary):
 ```js
-	this.javaSettings = {
-		loadPaths = directorylist( expandPath( '/modules/LaunchDarklySDK/lib' ), true, 'array', '*jar' ),
-		loadColdFusionClassPath = true,
-		reloadOnChange = false
-	};
+this.javaSettings = {
+	loadPaths = directorylist( expandPath( '/modules/LaunchDarklySDK/lib' ), true, 'array', '*jar' ),
+	loadColdFusionClassPath = true,
+	reloadOnChange = false
+};
 ```
 
 ## Usage
