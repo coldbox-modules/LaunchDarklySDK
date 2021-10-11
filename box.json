@@ -21,5 +21,6 @@
     "slug":"LaunchDarklySDK",
     "shortDescription":"CFML SDK for LaunchDarkly",
     "type":"modules",
-    "author":"Brad Wood"
+    "author":"Brad Wood",
+    "version":"1.0.0"
 }
