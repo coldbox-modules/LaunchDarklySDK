@@ -1,0 +1,25 @@
+{
+    "dependencies":{
+        "launchdarkly-java-server-sdk":"jar:https://search.maven.org/remotecontent?filepath=com/launchdarkly/launchdarkly-java-server-sdk/5.6.2/launchdarkly-java-server-sdk-5.6.2.jar"
+    },
+    "devDependencies":{
+        "testbox":"^4.4.0-snapshot"
+    },
+    "installPaths":{
+        "launchdarkly-java-server-sdk":"lib/launchdarkly-java-server-sdk/",
+        "testbox":"testbox/"
+    },
+    "name":"LaunchDarkly SDK",
+    "scripts":{
+        "postVersion":"publish && !git push --follow-tags"
+    },
+    "homepage":"https://github.com/coldbox-modules/LaunchDarklySDK",
+    "repository":{
+        "type":"",
+        "URL":"https://github.com/coldbox-modules/LaunchDarklySDK"
+    },
+    "slug":"LaunchDarklySDK",
+    "shortDescription":"CFML SDK for LaunchDarkly",
+    "type":"modules",
+    "author":"Brad Wood"
+}
