@@ -103,8 +103,15 @@ component accessors=true singleton {
             .http( HTTPConfig )
             .build();
 
-        setLDClient( createObject( 'java', 'com.launchdarkly.sdk.server.LDClient' ).init( settings.SDKKey, config ) )
+        setLDClient( createObject( 'java', 'com.launchdarkly.sdk.server.LDClient' ).init( settings.SDKKey, config ) );
 
+        // Register generic listener
+        if( isCustomFunction( settings.flagChangeListener ) || IsClosure( settings.flagChangeListener ) ) {
+            registerFlagChangeListener( settings.flagChangeListener );
+        }
+
+        // Register any specific flag change listeners
+        settings.flagValueChangeListeners.each( (fcl)=>registerFlagValueChangeListener( argumentCollection=fcl ) );
 
 	}
 
@@ -648,6 +655,59 @@ component accessors=true singleton {
             .isFlagKnown(
                 javaCast( 'string', featureKey )
             );
+    }
+
+    /**
+    * Registers a listener to be notified of feature flag changes in general.
+    * The listener will be notified whenever the SDK receives any change to any feature flag's configuration, or to a user segment that is referenced by a feature flag.
+    * If the updated flag is used as a prerequisite for other flags, the SDK assumes that those flags may now behave differently and sends flag change events for them as well.
+    * 
+    * Note that this does not necessarily mean the flag's value has changed for any particular user, only that some part of the flag configuration was changed so that 
+    * it may return a different value than it previously returned for some user. 
+    *
+    * @udf A closure which will be called any time a change is made to a flag in the LauchDarkly dashboard. The closure will receive the name of the flag as a string.
+    * 
+    */
+    function registerFlagChangeListener(
+        required udf
+    ) {
+        return getLDClient()
+            .getFlagTracker()
+            .addFlagChangeListener( 
+                createDynamicProxy(
+					new proxies.FlagChangeListener( arguments.udf ),
+					[ "com.launchdarkly.sdk.server.interfaces.FlagChangeListener" ]
+				)
+             );
+    }
+
+
+    /**
+    * Registers a listener to be notified of a change in a specific feature flag's value for a specific set of user properties.
+    * When you call this method, it first immediately evaluates the feature flag. It then uses a flag change listener to start listening for feature 
+    * flag configuration changes, and whenever the specified feature flag changes, it re-evaluates the flag for the same user.
+    * It then calls your FlagValueChangeListener if and only if the resulting value has changed.
+    *
+    * @featureKey Name of the feature key you'd like to monitor
+    * @udf A closure which will be called any time a flag value changes for a given user and featureKey.  The closure will receive two args-- the old value and new value
+    * @user A struct containing at least a "key" key to uniquely identify the user
+    * 
+    */
+    function registerFlagValueChangeListener(
+        required string featureKey,
+        required udf,
+        struct user={}
+    ) {
+        return getLDClient()
+            .getFlagTracker()
+            .addFlagValueChangeListener( 
+                javaCast( 'string', featureKey ),
+                buildLDUser( user ),
+                createDynamicProxy(                    
+					new proxies.FlagValueChangeListener( arguments.udf ),
+					[ "com.launchdarkly.sdk.server.interfaces.FlagValueChangeListener" ]
+				)                
+             );
     }
 
     /**

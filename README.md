@@ -81,6 +81,8 @@ Here's a list of the currently-support config items.  These can go in your `/con
 * `startWaitms` - Set how long in miliseoncd the constructor will block awaiting a successful connection to LaunchDarkly.
 * `offline` - Set whether this client is offline.
 * `userProvider` - A closure that returns a struct of user details for the current logged-in user.  The only required key is "key" which must be unique.
+* `registerFlagChangeListener` - This is a generic listener that will be fired any time any data changes on any flag for any user. (more below)
+* `registerFlagValueChangeListener()` - This is a very specific listener that will tell you specifically when the flag variation value for a specific user changes. (more below)
 
 ```js
 {
@@ -178,6 +180,33 @@ The only required key in your struct is `key` which needs to be unique to each u
 * `secondary` -- The secondary key for a user.
 
 All other keys will be added as custom properties.  Complex values will be serialized to JSON and added as an LDValue.  You can include anythign you want here including the user's role, status, preferences, etc.  This data will be available in LaunchDarkly to create segments out of so you can target very specific groups of users such as "All admin users in Flordia with purchases in the last 6 months".
+
+## Listening for flag changes
+
+One of the cool features of the Launchdarkly SDK is you can "push" out events to your web app instantly when you make changes to flags inside the LD web dashboard.  There are two types of listeners you can register as a simple closure which will be run automatically when a flag updates.
+
+* `registerFlagChangeListener()` - This is a generic listener that will be fired any time any data changes on any flag for any user.  It's up to you to pull the latest variations if you want to see what changed.  You ust get the name of the flag that changed.
+* `registerFlagValueChangeListener()` - This is a very specific listener that will tell you specifically when the flag variation value for a specific user changes.  You will receive the old and the new value to your closure.
+
+```js
+{
+    SDKKey='my-key',
+    flagChangeListener=( featureKey )=>writeDump( var="Flag [#featureKey#] changed!", output='console' ),
+    flagValueChangeListeners=[
+        {
+            featureKey : 'test',
+            user : { key : 12345 },
+            udf : ( oldValue, newValue )=>writeDump( var="Flag [test] changed from [#oldValue#] to [#newValue#]!", output='console' )
+        },
+        {
+            featureKey : 'another-feature',
+            udf : ( oldValue, newValue )=>{}
+        }
+    ]
+}
+```
+
+NOTE: If you don't shutdown the LD client properly, you will have old listener threads still in memory and firing.  Make sure you call `LD.shutdown()` if you're using the library outside of ColdBox (which manages these events for you).
 
 ## Misc
 

@@ -50,7 +50,7 @@ component extends="testbox.system.BaseSpec"{
 				var result = LD.booleanVariationDetail( 'boolean-feature', false );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBeFalse();
-				
+
 				var result = LD.variationDetail( 'boolean-feature', false );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBeFalse();
@@ -136,7 +136,18 @@ component extends="testbox.system.BaseSpec"{
 
 			it("can know if it is offline", ()=>{
 				expect( LD.isOffline() ).toBeFalse();
-			});			
+			});
+
+			it("can add a Flag Change Listener", ()=>{
+				LD.registerFlagChangeListener( ( featureKey )=>writeDump( var="Flag [#featureKey#] changed!", output='console' ) );
+			});
+
+			it("can add a Flag value Change Listener", ()=>{
+				LD.registerFlagValueChangeListener(
+					'test',
+					( oldvalue, newValue )=>writeDump( var="Flag [test] changed from [#oldValue#] to [#newValue#]!", output='console' )
+				);
+			});
 
 		});
 
