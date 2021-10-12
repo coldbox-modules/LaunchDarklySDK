@@ -14,7 +14,7 @@ Use CommandBox to install it:
 install launchdarklysdk
 ```
 
-If your allergic to CLI's, you can snag the code from Github or Forgebox, but it will be up to you to acqure the jar file referenced in the `box.json`.
+If your allergic to CLI's, you can snag the code from Github or Forgebox, but it will be up to you to acquire the jar file referenced in the `box.json`.
 
 Since I hate using javaloader in The Year of Our Lord 2021, you must manually add the jars to your `Application.cfc`'s `this.javaSettings`.  This can be done pretty quickly with a little snippet like so (adjust the paths as neccessary):
 ```js
@@ -25,6 +25,8 @@ this.javaSettings = {
 };
 ```
 
+Sometimes, CF needs a restart for this setting to work.  I don't know why, I just know I've seen it happen ¯\_(ツ)_/¯
+
 ## Usage
 
 If you're a cool kid and using ColdBox, you can just inject the client class (called `LD`)...
@@ -33,13 +35,13 @@ If you're a cool kid and using ColdBox, you can just inject the client class (ca
 property name="LD" inject="LD@LaunchDarklySDK";
 ```
 and start using it...
-```
-if( LD.stringVariation( 'my-feature-flag' ) ) {
+```js
+if( LD.variation(  featureKey='my-feature-flag', defaultValue=false ) ) {
     // enable awesomeness
 }
 ```
 The module will automatically shutdown the client when ColdBox reinits via the unicorn magic of ColdBox intercptors.  
-Configure the client in a ColdBox setting by adding to your `moduleSettings` struct in `/config/Coldbox.cfc`.
+Configure the client in a ColdBox setting by adding to your `moduleSettings` struct in `/config/Coldbox.cfc`.  (All config values listed below)
 
 ```js
 moduleSettings = {
@@ -51,18 +53,18 @@ moduleSettings = {
 
 If you're using this library outside of ColdBox, there's a couple things you'll need to do manally.
 
-### Create the client CFC 
+### Create the client CFC (Non-ColdBox)
 
 ONLY DO THIS ONCE AND STORE IT AS A SINGLETON.
-Pass your configuration as a struct to the constructor.  The key names and values are the same as what you'd put in the ColdBox config.
+Pass your configuration as a struct to the constructor.  The key names and values are the same as what you'd put in the ColdBox config.  (All config values listed below)
 
-```
+```js
 application.LD = new models.LD( {
 	SDKKey:'my-key-here'
 });
 ```
 
-### Shutdown the client before re-creating it
+### Shutdown the client before re-creating it (Non-ColdBox)
 
 If you have code that re-creates your application like a framework reinit, you'll want to shutdown the old LD client CFC to release underlying resources before you recreate it again.
 
@@ -72,9 +74,9 @@ application.LD.shutdown();
 
 ## Configuration
 
-Here's a list of the currently-support config items:
+Here's a list of the currently-support config items.  These can go in your `/config/Coldbox.cfc` or can be passed as a struct to the `LD` constructor in non-ColdBox mode.
 
-* `SDKKey` - Required-- your SDK Key from LaunchDarkly
+* `SDKKey` - (**Required**) your SDK Key from LaunchDarkly
 * `diagnosticOptOut` - Set to true to opt out of sending diagnostics data.
 * `startWaitms` - Set how long in miliseoncd the constructor will block awaiting a successful connection to LaunchDarkly.
 * `offline` - Set whether this client is offline.
@@ -101,7 +103,15 @@ Here's a list of the currently-support config items:
 
 ## Check feature variations
 
-Since we wrap the Java SDK which is strictly typed, you need to use a different method based on whether you are getting a feature variant that is a string, boolean, number, or JSON.  The methods all work the same, the types are just different.  Check your LaunchDarkly admin UI to see which type a given feature is created as.  A default value that matches the feature type is always required.
+Since we wrap the Java SDK which is strictly typed, you need to use a different method based on whether you are getting a feature variant that is a string, boolean, number, or JSON.  The generic `LD.variation()` method is a shortcut ONLY for getting boolean variations.
+
+```js
+if( LD.variation(  'my-feature-flag', false ) ) {
+    // enable awesomeness
+}
+```
+
+For string, number, or JSON variations, you must use the correctly typed method.  The methods all work the same, the types are just different.  Check your LaunchDarkly admin UI to see which type a given feature is created as.  A default value that matches the feature data type is always required.
 
 ```js
 if( LD.booleanVariation( 'my-feature', false ) ) {
@@ -121,7 +131,9 @@ var shoppingCartConfig = LD.JSONVariation(
     } );
 ```
 
-You can get a reason for the current result by calling the "details" version of each method.
+The `JSONVariation()` method will accept a complex value as the "default" and will also deserialize whatever JSON is stored in the variation so you get back a proper struct or array.
+
+You can get a reason for the current result by calling the "detail" version of each method, which returns a struct containing both the `value` of the variation and the `detail` explanation of why it was chosen. 
 
 
 ```js
@@ -133,16 +145,39 @@ if( results.value ) {
 }
 ```
 
-The `JSONVariation()` method will accept a complex value as the "default" and will also deserialize whatever JSON is stored in the variation so you get back a proper struct or array.
-
 ## Get all flags for a user
 
 You can get all the flags and their current values for a user like so:
 
 ```js
-var flags = LD.getAllFlags()
+var flagData = LD.getAllFlags()
 ```
 The result will be a struct with an `isValid` key that comes from the underlying Java SDK.  The flags will be in a nested struct called `flags` where the key is the name of the feature and the value is the current value.  If you pass `withReasons=true` to this method, the `flags` struct will have a nested struct for each flag containing `value` and `reason` keys similar to how `xxxVariationDetail()` works.
+
+## User Tracking
+
+Pretty much all the SDK methods accept a struct called `user` which defines all the details of the current user.  
+
+```js
+var results = LD.booleanVariationDetail( 'my-feature', false, { key : 'brad-wood' } );
+
+var flagData = LD.getAllFlags( { key : 'luis-majano' } )
+```
+However, the recommended approach is to use the `userProvider` setting for the library which allows you to set a single UDF that returns all the details for whatever user is currenlty logged in.  In this way, you can have that logic all in one place, pulling from the session scope, or wherever you track the current user.  Returning an empty struct from your `userProvider` UDF will create an "anonymous" user.  
+
+
+The only required key in your struct is `key` which needs to be unique to each user.  It should ideally be the primary key of your users table.  The following keys will be mapped to the internal properties of the same name:
+
+* `country`
+* `avatar`
+* `email`
+* `firstName`
+* `lastName`
+* `name` -- Full name
+* `ip`
+* `secondary` -- The secondary key for a user.
+
+All other keys will be added as custom properties.  Complex values will be serialized to JSON and added as an LDValue.  You can include anythign you want here including the user's role, status, preferences, etc.  This data will be available in LaunchDarkly to create segments out of so you can target very specific groups of users such as "All admin users in Flordia with purchases in the last 6 months".
 
 ## Misc
 
@@ -156,7 +191,7 @@ LD.identifyUser( { key : 12345, name : 'brad' } )
 var status = LD.getDataStoreStatus();
 
 // Get the status of the underlying data source
-var status = LD.getDataSouceStatus();
+var status = LD.getDataSourceStatus();
 
 // Track a custom user event
 LD.track( 'my-event' );

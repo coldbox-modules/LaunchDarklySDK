@@ -28,6 +28,7 @@ component extends="testbox.system.BaseSpec"{
 
 			it("can fetch a boolean variation", ()=>{
 				expect( LD.booleanVariation( 'boolean-feature', false ) ).toBeFalse();
+				expect( LD.variation( 'boolean-feature', false ) ).toBeFalse();
 			});
 
 			it("can fetch a number variation", ()=>{
@@ -47,6 +48,10 @@ component extends="testbox.system.BaseSpec"{
 
 			it("can fetch a boolean detail variation", ()=>{
 				var result = LD.booleanVariationDetail( 'boolean-feature', false );
+				expect( result ).toBeStruct();
+				expect( result.value ).toBeFalse();
+				
+				var result = LD.variationDetail( 'boolean-feature', false );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBeFalse();
 			});

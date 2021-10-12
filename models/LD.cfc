@@ -287,6 +287,23 @@ component accessors=true singleton {
     *
     * @returns A boolean representing the matching variation
     */
+    boolean function variation(
+        required string featureKey,
+        required boolean defaultValue,
+        struct user={}
+    ) {
+        return booleanVariation( argumentCollection=arguments );
+    }
+    
+    /**
+    * Get a boolean variation
+    *
+    * @featureKey Name of the feature key you'd like to check
+    * @defaultvalue The value to return by default
+    * @user A struct containing at least a "key" key to uniquely identify the user
+    *
+    * @returns A boolean representing the matching variation
+    */
     boolean function booleanVariation(
         required string featureKey,
         required boolean defaultValue,
@@ -405,6 +422,23 @@ component accessors=true singleton {
         result.value = evaluationDetail.getValue();
         result.evaluationDetail = evaluationDetail;
         return result;
+    }
+    
+    /**
+    * Get a boolean variation and detail explanation of why it was chosen
+    *
+    * @featureKey Name of the feature key you'd like to check
+    * @defaultvalue The value to return by default
+    * @user A struct containing at least a "key" key to uniquely identify the user
+    *
+    * @returns A struct contaning the explanation in a "detail" key and a boolean representing the matching variation in a "value" key.
+    */
+    struct function variationDetail(
+        required string featureKey,
+        required boolean defaultValue,
+        struct user={}
+    ) {
+        return booleanVariationDetail( argumentCollection=arguments );
     }
     
     /**
