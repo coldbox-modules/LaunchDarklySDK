@@ -61,7 +61,7 @@ Map the CFC in Wirebox's binder.  Pass your configuration as a struct to the map
 binder
     .mapPath( '/modules/LaunchDarklySDK/models/LD.cfc' )
     .initArg(
-        name='config',
+        name='settings',
         value={
             SDKKey : 'my-key-here'
         });

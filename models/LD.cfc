@@ -50,9 +50,8 @@ component accessors=true singleton {
 			// backwards compat with older versions of ColdBox 
 			if( wirebox.isColdBoxLinked() ) {
 			    setColdBox( wirebox.getColdBox() );
-                
+			    setSettings( wirebox.getInstance( dsl='box:moduleSettings:LaunchDarklySDK' ) );   
 			}
-			setSettings( wirebox.getInstance( dsl='box:moduleSettings:LaunchDarklySDK' ) );	
 		}
 		
 		configure();
