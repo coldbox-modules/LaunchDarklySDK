@@ -132,29 +132,10 @@ component accessors=true singleton {
     * @returns A struct of default settings, or an empty struct if an error occurs reading the default settings.
     */
     function getDefaultSettings() {
-        try {
-            var webRoot = expandpath( '/' ).replace( '\', '/', 'all' );
-            var moduleConfigPath = getCanonicalPath( getDirectoryFromPath( GetCurrentTemplatePath() ) & '/../ModuleConfig' ).replace( '\', '/', 'all' ).replace( '//', '/', 'all' );
-            moduleConfigPath = moduleConfigPath.replaceNoCase( webRoot, '' ).replace( '/', '.', 'all' );
-            var oModuleConfig = createObject( moduleConfigPath );
-            oModuleConfig.configure();
-            oModuleConfig._spy = _spy;
-            return oModuleConfig._spy();
-        } catch( any e ) {
-   			log.error( "Launch Darkly error getting default settings. #e.message# #e.detail#" );
-        }
-        return {};
+        // All default settings externalized into this CFC for non-ColdBox reuse
+        return new config.Settings().configure();
     }
 
-    /**
-    * A spy method to read the ModuleConfig's default settings.
-    *
-    * @returns A struct of default settings
-    */
-    private function _spy() {
-        return variables.settings ?: {};
-    }
-    
     /**
     * A logbox shim when used outside of WireBox
     */
