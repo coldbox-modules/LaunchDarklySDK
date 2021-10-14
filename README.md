@@ -53,7 +53,35 @@ moduleSettings = {
 
 If you're using this library outside of ColdBox, there's a couple things you'll need to do manally.
 
-### Create the client CFC (Non-ColdBox)
+### Create the client CFC (WireBox standalone)
+
+Map the CFC in Wirebox's binder.  Pass your configuration as a struct to the mapping DSL.  The key names and values are the same as what you'd put in the ColdBox config.  (All config values listed below)
+
+```js
+binder
+    .mapPath( '/modules/LaunchDarklySDK/models/LD.cfc' )
+    .initArg(
+        name='config',
+        value={
+            SDKKey : 'my-key-here'
+        });
+```
+
+WireBox will create it as-needed and automatically persist it as a singleton.  All you need to do is ask WireBox for it when you need it:
+
+```js
+wirebox.getInstance( 'LD' )
+```
+
+### Shutdown the client before re-creating it (WireBox standalone)
+
+If you have code that re-creates your application like a framework reinit, you'll want to shutdown the old LD client CFC to release underlying resources before you recreate it again.
+
+```js
+wirebox.getInstance( 'LD' ).shutdown();
+```
+
+### Create the client CFC (Non-ColdBox/WireBox)
 
 ONLY DO THIS ONCE AND STORE IT AS A SINGLETON.
 Pass your configuration as a struct to the constructor.  The key names and values are the same as what you'd put in the ColdBox config.  (All config values listed below)
@@ -64,7 +92,7 @@ application.LD = new models.LD( {
 });
 ```
 
-### Shutdown the client before re-creating it (Non-ColdBox)
+### Shutdown the client before re-creating it (Non-ColdBox/WireBox)
 
 If you have code that re-creates your application like a framework reinit, you'll want to shutdown the old LD client CFC to release underlying resources before you recreate it again.
 

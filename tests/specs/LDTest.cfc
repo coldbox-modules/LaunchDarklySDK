@@ -119,7 +119,7 @@ component extends="testbox.system.BaseSpec"{
 			});
 
 			it("can track event with metric value", ()=>{
-				LD.track( eventName='invalid etries', metricValue=42 );
+				LD.track( eventName='invalid entries', metricValue=42 );
 			});
 
 			it("can track event with data and metric value", ()=>{
