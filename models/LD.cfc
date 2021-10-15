@@ -240,8 +240,41 @@ component accessors=true singleton {
     * SDK Methods
     ******************************************************************************** */
 
+    
+    /**
+    * Get a variation
+    *
+    * @featureKey Name of the feature key you'd like to check
+    * @defaultvalue The value to return by default
+    * @user A struct containing at least a "key" key to uniquely identify the user
+    *
+    * @returns A boolean representing the matching variation
+    */
+    any function variation(
+        required string featureKey,
+        required any defaultValue,
+        struct user={}
+    ) {
+        return JSONVariation( argumentCollection=arguments );
+    }
+    
+    /**
+    * Get a variation and detail explanation of why it was chosen
+    *
+    * @featureKey Name of the feature key you'd like to check
+    * @defaultvalue The value to return by default
+    * @user A struct containing at least a "key" key to uniquely identify the user
+    *
+    * @returns A struct contaning the explanation in a "detail" key and a boolean representing the matching variation in a "value" key.
+    */
+    struct function variationDetail(
+        required string featureKey,
+        required any defaultValue,
+        struct user={}
+    ) {
+        return JSONVariationDetail( argumentCollection=arguments );
+    }
 
-    // I'd love to have a single, loosley typed variation() method, but the underlying Java SDK doesn't allow me to do that
 
     /**
     * Get a string variation
@@ -263,23 +296,6 @@ component accessors=true singleton {
                 buildLDUser( user ),
                 javaCast( 'string', defaultValue )
             );
-    }
-    
-    /**
-    * Get a boolean variation
-    *
-    * @featureKey Name of the feature key you'd like to check
-    * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
-    *
-    * @returns A boolean representing the matching variation
-    */
-    boolean function variation(
-        required string featureKey,
-        required boolean defaultValue,
-        struct user={}
-    ) {
-        return booleanVariation( argumentCollection=arguments );
     }
     
     /**
@@ -409,23 +425,6 @@ component accessors=true singleton {
         result.value = evaluationDetail.getValue();
         result.evaluationDetail = evaluationDetail;
         return result;
-    }
-    
-    /**
-    * Get a boolean variation and detail explanation of why it was chosen
-    *
-    * @featureKey Name of the feature key you'd like to check
-    * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
-    *
-    * @returns A struct contaning the explanation in a "detail" key and a boolean representing the matching variation in a "value" key.
-    */
-    struct function variationDetail(
-        required string featureKey,
-        required boolean defaultValue,
-        struct user={}
-    ) {
-        return booleanVariationDetail( argumentCollection=arguments );
     }
     
     /**

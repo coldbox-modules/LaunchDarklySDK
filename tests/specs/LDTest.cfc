@@ -33,15 +33,21 @@ component extends="testbox.system.BaseSpec"{
 
 			it("can fetch a number variation", ()=>{
 				expect( LD.numberVariation( 'number-feature', 23  ) ).toBe( 1 );
+				expect( LD.variation( 'number-feature', 23  ) ).toBe( 1 );
 			});
 
 			it("can fetch a json variation", ()=>{
 				expect( LD.JSONVariation( 'json-feature', [] ) ).toBe( { "foo": "bar" } );
 				expect( LD.JSONVariation( 'json-feature', "[]" ) ).toBe( { "foo": "bar" } );
+				expect( LD.variation( 'json-feature', [] ) ).toBe( { "foo": "bar" } );
+				expect( LD.variation( 'json-feature', "[]" ) ).toBe( { "foo": "bar" } );
 			});
 
 			it("can fetch a string detail variation", ()=>{
 				var result = LD.stringVariationDetail( 'string-feature', 'esfsdf' );
+				expect( result ).toBeStruct();
+				expect( result.value ).toBe( 'bar' );
+				var result = LD.variationDetail( 'string-feature', 'esfsdf' );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBe( 'bar' );
 			});
@@ -60,13 +66,25 @@ component extends="testbox.system.BaseSpec"{
 				var result = LD.numberVariationDetail( 'number-feature', 23  );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBe( 1 );
+
+				var result = LD.variationDetail( 'number-feature', 23  );
+				expect( result ).toBeStruct();
+				expect( result.value ).toBe( 1 );
 			});
 
 			it("can fetch a json detail variation", ()=>{
 				var result = LD.JSONVariationDetail( 'json-feature', [] );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBe( { "foo": "bar" } );
+				
 				var result = LD.JSONVariationDetail( 'json-feature', "[]" );
+				expect( result.value ).toBe( { "foo": "bar" } );
+
+				var result = LD.variationDetail( 'json-feature', [] );
+				expect( result ).toBeStruct();
+				expect( result.value ).toBe( { "foo": "bar" } );
+				
+				var result = LD.variationDetail( 'json-feature', "[]" );
 				expect( result.value ).toBe( { "foo": "bar" } );
 			});
 
