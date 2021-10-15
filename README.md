@@ -26,6 +26,7 @@ this.javaSettings = {
 ```
 
 Sometimes, CF needs a restart for this setting to work.  I don't know why, I just know I've seen it happen ¯\_(ツ)_/¯
+Note, Adobe Coldfusion **requires** the `loadColdFusionClassPath` to be true.
 
 ## Usage
 
@@ -133,7 +134,7 @@ Here's a list of the currently-support config items.  These can go in your `/con
 
 ## Check feature variations
 
-Since we wrap the Java SDK which is strictly typed, you need to use a different method based on whether you are getting a feature variant that is a string, boolean, number, or JSON.  The generic `LD.variation()` method is a shortcut ONLY for getting boolean variations.
+You can get a variation value like so.  Note, the type of data coming back will depend on what type is set in the feature flag config in the Launchdarkly console.  A default value that matches the feature data type is always required.
 
 ```js
 if( LD.variation(  'my-feature-flag', false ) ) {
@@ -141,7 +142,7 @@ if( LD.variation(  'my-feature-flag', false ) ) {
 }
 ```
 
-For string, number, or JSON variations, you must use the correctly typed method.  The methods all work the same, the types are just different.  Check your LaunchDarkly admin UI to see which type a given feature is created as.  A default value that matches the feature data type is always required.
+You can use the method above for all feature flag types, but there are also methods provided for each type just to match the Java SDK. 
 
 ```js
 if( LD.booleanVariation( 'my-feature', false ) ) {
