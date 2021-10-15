@@ -480,7 +480,8 @@ component accessors=true singleton {
                 LDValue.parse( defaultValue )
             );
 
-0        result.value = deserializeJSON( evaluationDetail.getValue().toJsonString() );
+        result.value = deserializeJSON( evaluationDetail.getValue().toJsonString() );
+        result.detail = evaluationDetail.toString();
         result.evaluationDetail = evaluationDetail;
         return result;
     }
