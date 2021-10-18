@@ -236,6 +236,31 @@ component accessors=true singleton {
         }
     }
 
+    function buildEvaluationDetail( required evaluationDetail ) {
+        var result = {};
+        var reason = evaluationDetail.getReason();
+        if( evaluationDetail.getValue().getClass().getName().startsWith( 'com.launchdarkly.sdk.LDValue' ) ) {
+            result[ 'value' ] = deserializeJSON( evaluationDetail.getValue().toJsonString() );
+        } else {
+            result[ 'value' ] = evaluationDetail.getValue();
+        }
+        result[ 'detail' ] = evaluationDetail.toString();
+        result[ 'variationIndex' ] = evaluationDetail.getVariationIndex() ?: '';
+        result[ 'isDefault' ] = evaluationDetail.isDefaultValue() ?: '';
+        
+        result[ 'reason' ] = {};
+        result.reason[ 'detail' ] = reason.toString();
+        result.reason[ 'exception' ] = reason.getException() ?: '';
+        result.reason[ 'prerequisiteKey' ] = reason.getPrerequisiteKey() ?: '';
+        result.reason[ 'ruleId' ] = reason.getRuleId() ?: '';
+        result.reason[ 'ruleIndex' ] = reason.getRuleIndex() ?: '';
+        result.reason[ 'isInExperiment' ] = reason.isInExperiment();
+        result.reason[ 'kind' ] = reason.getKind()?.name() ?: '';
+        result.reason[ 'errorKind' ] = reason.getErrorKind()?.name() ?: '';
+
+        return result;
+    }
+
     /* *****************************************************************************
     * SDK Methods
     ******************************************************************************** */
@@ -394,10 +419,7 @@ component accessors=true singleton {
                 buildLDUser( user ),
                 javaCast( 'string', defaultValue )
             );
-        result.detail = evaluationDetail.toString();
-        result.value = evaluationDetail.getValue();
-        result.evaluationDetail = evaluationDetail;
-        return result;
+        return buildEvaluationDetail( evaluationDetail );
     }
     
     /**
@@ -421,10 +443,7 @@ component accessors=true singleton {
                 buildLDUser( user ),
                 javaCast( 'boolean', defaultValue )
             );
-        result.detail = evaluationDetail.toString();
-        result.value = evaluationDetail.getValue();
-        result.evaluationDetail = evaluationDetail;
-        return result;
+        return buildEvaluationDetail( evaluationDetail );
     }
     
     /**
@@ -448,10 +467,7 @@ component accessors=true singleton {
                 buildLDUser( user ),
                 javaCast( 'double', defaultValue )
             );
-        result.detail = evaluationDetail.toString();
-        result.value = evaluationDetail.getValue();
-        result.evaluationDetail = evaluationDetail;
-        return result;
+        return buildEvaluationDetail( evaluationDetail );
     }
     
     /**
@@ -479,11 +495,7 @@ component accessors=true singleton {
                 buildLDUser( user ),
                 LDValue.parse( defaultValue )
             );
-
-        result.value = deserializeJSON( evaluationDetail.getValue().toJsonString() );
-        result.detail = evaluationDetail.toString();
-        result.evaluationDetail = evaluationDetail;
-        return result;
+        return buildEvaluationDetail( evaluationDetail );
     }
 
     
@@ -540,7 +552,7 @@ component accessors=true singleton {
     function identifyUser(
         struct user={}
     ) {
-        var evaluationDetail = getLDClient()
+        getLDClient()
             .identify( buildLDUser( user ) );
     }
     
