@@ -14,9 +14,9 @@ Use CommandBox to install it:
 install launchdarklysdk
 ```
 
-If your allergic to CLI's, you can snag the code from Github or Forgebox, but it will be up to you to acquire the jar file referenced in the `box.json`.
+If you're allergic to CLI's, you can snag the code from Github or Forgebox, but it will be up to you to acquire the jar file referenced in the `box.json`.
 
-Since I hate using javaloader in The Year of Our Lord 2021, you must manually add the jars to your `Application.cfc`'s `this.javaSettings`.  This can be done pretty quickly with a little snippet like so (adjust the paths as neccessary):
+Since I hate using javaloader in The Year of Our Lord 2021, you must manually add the jars to your `Application.cfc`'s `this.javaSettings`.  This can be done pretty quickly with a little snippet like so (adjust the paths as necessary):
 ```js
 this.javaSettings = {
 	loadPaths = directorylist( expandPath( '/modules/LaunchDarklySDK/lib' ), true, 'array', '*jar' ),
@@ -41,7 +41,7 @@ if( LD.variation(  featureKey='my-feature-flag', defaultValue=false ) ) {
     // enable awesomeness
 }
 ```
-The module will automatically shutdown the client when ColdBox reinits via the unicorn magic of ColdBox intercptors.  
+The module will automatically shutdown the client when ColdBox reinits via the unicorn magic of ColdBox interceptors.  
 Configure the client in a ColdBox setting by adding to your `moduleSettings` struct in `/config/Coldbox.cfc`.  (All config values listed below)
 
 ```js
@@ -52,7 +52,7 @@ moduleSettings = {
 };
 ```
 
-If you're using this library outside of ColdBox, there's a couple things you'll need to do manally.
+If you're using this library outside of ColdBox, there's a couple things you'll need to do manually.
 
 ### Create the client CFC (WireBox standalone)
 
@@ -68,7 +68,7 @@ binder
         });
 ```
 
-WireBox will create it as-needed and automatically persist it as a singleton.  All you need to do is ask WireBox for it when you need it:
+WireBox will create it as needed and automatically persist it as a singleton.  All you need to do is ask WireBox for it when you need it:
 
 ```js
 wirebox.getInstance( 'LD' )
@@ -106,8 +106,8 @@ application.LD.shutdown();
 Here's a list of the currently-support config items.  These can go in your `/config/Coldbox.cfc` or can be passed as a struct to the `LD` constructor in non-ColdBox mode.
 
 * `SDKKey` - (**Required**) your SDK Key from LaunchDarkly
-* `diagnosticOptOut` - Set to true to opt out of sending diagnostics data.
-* `startWaitms` - Set how long in miliseoncd the constructor will block awaiting a successful connection to LaunchDarkly.
+* `diagnosticOptOut` - Set to true to opt-out of sending diagnostics data.
+* `startWaitms` - Set how long in millisecond the constructor will block awaiting a successful connection to LaunchDarkly.
 * `offline` - Set whether this client is offline.
 * `userProvider` - A closure that returns a struct of user details for the current logged-in user.  The only required key is "key" which must be unique.
 * `registerFlagChangeListener` - This is a generic listener that will be fired any time any data changes on any flag for any user. (more below)
@@ -194,7 +194,7 @@ var results = LD.booleanVariationDetail( 'my-feature', false, { key : 'brad-wood
 
 var flagData = LD.getAllFlags( { key : 'luis-majano' } )
 ```
-However, the recommended approach is to use the `userProvider` setting for the library which allows you to set a single UDF that returns all the details for whatever user is currenlty logged in.  In this way, you can have that logic all in one place, pulling from the session scope, or wherever you track the current user.  Returning an empty struct from your `userProvider` UDF will create an "anonymous" user.  
+However, the recommended approach is to use the `userProvider` setting for the library which allows you to set a single UDF that returns all the details for whatever user is currently logged in.  In this way, you can have that logic all in one place, pulling from the session scope, or wherever you track the current user.  Returning an empty struct from your `userProvider` UDF will create an "anonymous" user.  
 
 
 The only required key in your struct is `key` which needs to be unique to each user.  It should ideally be the primary key of your users table.  The following keys will be mapped to the internal properties of the same name:
@@ -208,13 +208,13 @@ The only required key in your struct is `key` which needs to be unique to each u
 * `ip`
 * `secondary` -- The secondary key for a user.
 
-All other keys will be added as custom properties.  Complex values will be serialized to JSON and added as an LDValue.  You can include anythign you want here including the user's role, status, preferences, etc.  This data will be available in LaunchDarkly to create segments out of so you can target very specific groups of users such as "All admin users in Flordia with purchases in the last 6 months".
+All other keys will be added as custom properties.  Complex values will be serialized to JSON and added as an LDValue.  You can include anything you want here including the user's role, status, preferences, etc.  This data will be available in LaunchDarkly to create segments out of so you can target very specific groups of users such as "All admin users in Florida with purchases in the last 6 months".
 
 ## Listening for flag changes
 
 One of the cool features of the Launchdarkly SDK is you can "push" out events to your web app instantly when you make changes to flags inside the LD web dashboard.  There are two types of listeners you can register as a simple closure which will be run automatically when a flag updates.
 
-* `registerFlagChangeListener()` - This is a generic listener that will be fired any time any data changes on any flag for any user.  It's up to you to pull the latest variations if you want to see what changed.  You ust get the name of the flag that changed.
+* `registerFlagChangeListener()` - This is a generic listener that will be fired any time any data changes on any flag for any user.  It's up to you to pull the latest variations if you want to see what changed.  You just get the name of the flag that changed.
 * `registerFlagValueChangeListener()` - This is a very specific listener that will tell you specifically when the flag variation value for a specific user changes.  You will receive the old and the new value to your closure.
 
 ```js
@@ -239,7 +239,7 @@ NOTE: If you don't shutdown the LD client properly, you will have old listener t
 
 ## Misc
 
-Here's some more SDK methdos in example form:
+Here's some more SDK methods in example form:
 
 ```js
 // Teach the SDK about a new user which will show up in the dashboard (useful for preloading users)
