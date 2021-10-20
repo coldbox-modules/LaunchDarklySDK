@@ -186,6 +186,8 @@ component accessors=true singleton {
                 .init( userProps.key );
             
             userProps = duplicate( userProps );
+            
+            userProps.delete( 'key' );
 
             if( userProps.keyExists( 'country' ) ) {
                 user.country( userProps.country );
