@@ -106,7 +106,7 @@ component accessors=true singleton {
             .diagnosticOptOut( settings.diagnosticOptOut )
             .http( HTTPConfig );
 
-        if( !isNull( settings?.datasource?.type ) ) {
+        if( !isNull( settings.datasource.type ) ) {
             if( settings.datasource.type == 'testData' ) {
                 setTestData( LDTestData.dataSource() );
                 configBuilder.dataSource( getTestData() );
