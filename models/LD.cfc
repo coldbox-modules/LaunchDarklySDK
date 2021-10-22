@@ -15,6 +15,8 @@ component accessors=true singleton {
 	property name="log";
     
 	property name="LDClient";
+	property name="testData";
+	property name="LDValue";
 
 
     LDConfigBuilder = createObject( 'java', 'com.launchdarkly.sdk.server.LDConfig$Builder' );
@@ -23,7 +25,10 @@ component accessors=true singleton {
     FlagsStateOption = createObject( 'java', 'com.launchdarkly.sdk.server.FlagsStateOption' );
     Duration = createObject( 'java', 'java.time.Duration' );
     LDComponents = createObject( 'java', 'com.launchdarkly.sdk.server.Components' );
-    
+    FileData = createObject( 'java', 'com.launchdarkly.sdk.server.integrations.FileData' );
+    DuplicateKeysHandling = createObject( 'java', 'com.launchdarkly.sdk.server.integrations.FileData$DuplicateKeysHandling' );
+    LDTestData = createObject( 'java', 'com.launchdarkly.sdk.server.integrations.TestData' );
+
 
 	/**
 	 * Constructor
@@ -86,7 +91,7 @@ component accessors=true singleton {
 
         log.info( 'Launch Darkly SDK starting with the following config: #serializeJSON( settings )#' );
 
-		if ( !len( settings.SDKKey ) ) {
+		if ( !len( settings.SDKKey ) && ( settings.datasource.type ?: '' ) == 'default' ) {
    			log.warn( "Launch Darkly requires an SDK Key, going into [offline] mode." );
 			settings.offline=true;
 		}
@@ -94,13 +99,53 @@ component accessors=true singleton {
         // https://launchdarkly.github.io/java-server-sdk/com/launchdarkly/sdk/server/integrations/HttpConfigurationBuilder.html
         HTTPConfig = LDComponents.httpConfiguration();
 
-        var config = LDConfigBuilder
+        var configBuilder = LDConfigBuilder
             .init()
             .offline( settings.offline )
             .startWait( Duration.ofMillis( settings.startWaitms ) )
             .diagnosticOptOut( settings.diagnosticOptOut )
-            .http( HTTPConfig )
-            .build();
+            .http( HTTPConfig );
+
+        if( !isNull( settings?.datasource?.type ) ) {
+            if( settings.datasource.type == 'testData' ) {
+                setTestData( LDTestData.dataSource() );
+                configBuilder.dataSource( getTestData() );
+            } else if( settings.datasource.type == 'fileData' ) {
+                settings.datasource.fileDataPaths = settings.datasource.fileDataPaths ?: [];
+                if( isSimpleValue( settings.datasource.fileDataPaths ) ) {
+                    settings.datasource.fileDataPaths = listToArray( settings.datasource.fileDataPaths )
+                }
+                if( !settings.datasource.fileDataPaths.len() ) {
+                    throw( message="No Launch Darkly fileDataPaths specified." );
+                }
+                settings.datasource.fileDataPaths.each( (p)=>{
+                    if( !fileExists( p ) ) {
+                        throw( message="Launch Darkly fileDataPath [#p#] is invalid (does not exist)." );
+                    }
+                } );
+
+                // Can't use elvis operator on booleans because Adobe CF is stupid!
+                if( isNull( settings.datasource.fileDataIgnoreDuplicates ) ) {
+                    settings.datasource.fileDataIgnoreDuplicates = true;
+                }
+                // Can't use elvis operator on booleans because Adobe CF is stupid!
+                if( isNull( settings.datasource.fileDataAutoUpdate ) ) {
+                    settings.datasource.fileDataAutoUpdate = false;
+                }
+
+                configBuilder.dataSource( 
+                    fileData.datasource()
+                        .filePaths( javacast( 'String[]', settings.datasource.fileDataPaths ) )
+                        .autoUpdate( settings.datasource.fileDataAutoUpdate )
+                        .duplicateKeysHandling( settings.datasource.fileDataIgnoreDuplicates ? DuplicateKeysHandling.IGNORE : DuplicateKeysHandling.FAIL )
+                       );
+
+            } else if( settings.datasource.type != 'default' ) {
+                throw( message="Unkown Launch Darkly datasource type [#settings.datasource.type#].", detail="Valid datasoruce types are default, fileData, and testData" );
+            }
+        }
+        
+        var config = configBuilder.build();
 
         setLDClient( createObject( 'java', 'com.launchdarkly.sdk.server.LDClient' ).init( settings.SDKKey, config ) );
 
@@ -725,6 +770,7 @@ component accessors=true singleton {
         log.info( 'Launch Darkly SDK shutting down.' );
         flush();
         getLDClient().close();
+        setTestData( javaCast( 'null', '' ) )
     }
 
 }

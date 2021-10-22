@@ -1,0 +1,115 @@
+{
+    "flags": {
+        "boolean-feature": {
+            "key": "boolean-feature",
+            "on": false,
+            "prerequisites": [],
+            "targets": [],
+            "rules": [],
+            "fallthrough": {
+                "variation": 0
+            },
+            "offVariation": 1,
+            "variations": [
+                true,
+                false
+            ],
+            "clientSideAvailability": {
+                "usingMobileKey": false,
+                "usingEnvironmentId": false
+            },
+            "clientSide": false,
+            "salt": "3796c14dd01b4634879ff41f96313ed6",
+            "trackEvents": false,
+            "trackEventsFallthrough": false,
+            "debugEventsUntilDate": null,
+            "version": 2,
+            "deleted": false
+        },
+        "json-feature": {
+            "key": "json-feature",
+            "on": false,
+            "prerequisites": [],
+            "targets": [],
+            "rules": [],
+            "fallthrough": {
+                "variation": 0
+            },
+            "offVariation": 1,
+            "variations": [
+                [
+                    1,
+                    2,
+                    3
+                ],
+                {
+                    "foo": "bar"
+                }
+            ],
+            "clientSideAvailability": {
+                "usingMobileKey": false,
+                "usingEnvironmentId": false
+            },
+            "clientSide": false,
+            "salt": "0ce926ed68e241c5903fcfb0cb1bc803",
+            "trackEvents": false,
+            "trackEventsFallthrough": false,
+            "debugEventsUntilDate": null,
+            "version": 2,
+            "deleted": false
+        },
+        "number-feature": {
+            "key": "number-feature",
+            "on": true,
+            "prerequisites": [],
+            "targets": [],
+            "rules": [],
+            "fallthrough": {
+                "variation": 0
+            },
+            "offVariation": 2,
+            "variations": [
+                1,
+                2,
+                3
+            ],
+            "clientSideAvailability": {
+                "usingMobileKey": false,
+                "usingEnvironmentId": false
+            },
+            "clientSide": false,
+            "salt": "85f9d9419fb94f1bb8a41c6be882f9aa",
+            "trackEvents": false,
+            "trackEventsFallthrough": false,
+            "debugEventsUntilDate": null,
+            "version": 3,
+            "deleted": false
+        },
+        "string-feature": {
+            "key": "string-feature",
+            "on": false,
+            "prerequisites": [],
+            "targets": [],
+            "rules": [],
+            "fallthrough": {
+                "variation": 0
+            },
+            "offVariation": 1,
+            "variations": [
+                "foo",
+                "bar"
+            ],
+            "clientSideAvailability": {
+                "usingMobileKey": false,
+                "usingEnvironmentId": false
+            },
+            "clientSide": false,
+            "salt": "34aa52c053b6414c8bdb23770142f532",
+            "trackEvents": false,
+            "trackEventsFallthrough": false,
+            "debugEventsUntilDate": null,
+            "version": 2,
+            "deleted": false
+        }
+    }
+}

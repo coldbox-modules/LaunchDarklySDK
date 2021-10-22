@@ -2,16 +2,23 @@ component {
 
     function configure() {
         return {
-            SDKKey='',
-            diagnosticOptOut=false,
-            startWaitms=5000,
-            offline=false,
-            http={},
-            logging={},
-            userProvider=()=>{ return {}; },
-            flagChangeListener='',
-            // flagChangeListener=( featureKey )=>writeDump( var="Flag [#featureKey#] changed!", output='console' );
-            flagValueChangeListeners=[
+            SDKKey : '',
+            diagnosticOptOut : false,
+            startWaitms : 5000,
+            offline : false,
+            http : {},
+            logging : {},
+            dataSource : {
+                // Possible options: default, fileData, testData
+                type : 'default',
+                fileDataPaths : [],
+                fileDataIgnoreDuplicates : true,
+                fileDataAutoUpdate : false
+            },
+            userProvider : ()=>{ return {}; },
+            flagChangeListener : '',
+            // flagChangeListener : ( featureKey )=>writeDump( var="Flag [#featureKey#] changed!", output='console' );
+            flagValueChangeListeners : [
                 /*
                 {
                     featureKey : 'my-feature',

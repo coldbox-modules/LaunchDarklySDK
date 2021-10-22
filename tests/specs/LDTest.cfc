@@ -8,7 +8,11 @@ component extends="testbox.system.BaseSpec"{
 	function beforeAll() {
 		LD = new models.LD( {
 			SDKKey=SDKKey,
-			userProvider=()=>{ return { "Key" : "brad" }; }
+			userProvider=()=>{ return { "Key" : "brad" }; },
+			datasource:{
+				type : 'fileData',
+				fileDataPaths : expandPath( '/tests/data/test-flags.json' )
+			} 
 		} );
 	}
 
@@ -162,8 +166,8 @@ component extends="testbox.system.BaseSpec"{
 
 			it("can add a Flag value Change Listener", ()=>{
 				LD.registerFlagValueChangeListener(
-					'test',
-					( oldvalue, newValue )=>writeDump( var="Flag [test] changed from [#oldValue#] to [#newValue#]!", output='console' )
+					'string-feature',
+					( oldvalue, newValue )=>writeDump( var="Flag [string-feature] changed from [#oldValue#] to [#newValue#]!", output='console' )
 				);
 			});
 
