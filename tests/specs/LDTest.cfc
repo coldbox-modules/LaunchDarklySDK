@@ -11,7 +11,8 @@ component extends="testbox.system.BaseSpec"{
 			userProvider=()=>{ return { "Key" : "brad" }; },
 			datasource:{
 				type : 'fileData',
-				fileDataPaths : expandPath( '/tests/data/test-flags.json' )
+				fileDataPaths : expandPath( '/tests/data/test-flags.json' ),
+				fileDataAutoUpdate : true
 			} 
 		} );
 	}
@@ -169,6 +170,10 @@ component extends="testbox.system.BaseSpec"{
 					'string-feature',
 					( oldvalue, newValue )=>writeDump( var="Flag [string-feature] changed from [#oldValue#] to [#newValue#]!", output='console' )
 				);
+			});
+
+			it("can track custom user info", ()=>{
+				expect( LD.stringVariation( 'string-feature', 'esfsdf', { key : 'brad', foo : 'bar', baz : [ 1,2,3 ] , bum : { why : 'not?' } } ) ).toBe( 'bar' );
 			});
 
 		});

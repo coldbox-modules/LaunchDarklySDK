@@ -276,7 +276,7 @@ component accessors=true singleton {
                     user.custom( javaCast( 'string', name ), value );
                 } else {
                     // Turn complex values into JSON
-                    user.custom( javaCast( 'string', name ), DValue.parse( serializeJSON( value ) ) );
+                    user.custom( javaCast( 'string', name ), LDValue.parse( serializeJSON( value ) ) );
                 }
             }
             return user.build();
