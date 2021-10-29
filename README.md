@@ -122,7 +122,7 @@ Here's a list of the currently-support config items.  These can go in your `/con
                     key : session.user.id,
                     name : session.user.fullname,
                     email : session.user.email,
-                    country : session.user.country,
+                    country : session.user.country
                 };
             } else {
                 // Anonymous
