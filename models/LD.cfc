@@ -73,10 +73,10 @@ component accessors=true singleton {
         } else {
             // Logbox shim for complete legacy mode
             setLog( {
-                info : (message)=>_log(message,'info'),
-                warn : (message)=>_log(message,'warn'),
-                error : (message)=>_log(message,'error'),
-                debug : (message)=>_log(message,'debug')
+                info : function(message){_log(message,'info');},
+                warn : function(message){_log(message,'warn');},
+                error : function(message){_log(message,'error');},
+                debug : function(message){_log(message,'debug');}
             } );
         }
 
@@ -113,12 +113,12 @@ component accessors=true singleton {
             } else if( settings.datasource.type == 'fileData' ) {
                 settings.datasource.fileDataPaths = settings.datasource.fileDataPaths ?: [];
                 if( isSimpleValue( settings.datasource.fileDataPaths ) ) {
-                    settings.datasource.fileDataPaths = listToArray( settings.datasource.fileDataPaths )
+                    settings.datasource.fileDataPaths = listToArray( settings.datasource.fileDataPaths );
                 }
                 if( !settings.datasource.fileDataPaths.len() ) {
                     throw( message="No Launch Darkly fileDataPaths specified." );
                 }
-                settings.datasource.fileDataPaths.each( (p)=>{
+                settings.datasource.fileDataPaths.each( function(p){
                     if( !fileExists( p ) ) {
                         throw( message="Launch Darkly fileDataPath [#p#] is invalid (does not exist)." );
                     }
@@ -155,7 +155,7 @@ component accessors=true singleton {
         }
 
         // Register any specific flag change listeners
-        settings.flagValueChangeListeners.each( (fcl)=>registerFlagValueChangeListener( argumentCollection=fcl ) );
+        settings.flagValueChangeListeners.each( function(fcl){registerFlagValueChangeListener( argumentCollection=fcl );} );
 
 	}
 
@@ -285,7 +285,7 @@ component accessors=true singleton {
         } else if( isStruct( value ) ) {
             for( var key in value ) {
                 // Turn myStruct = { foo : 'bar' } into myStruct.foo = 'bar'
-                storeCustomUserAttribute( listAppend( name, key, '.' ), value[ key ], user )
+                storeCustomUserAttribute( listAppend( name, key, '.' ), value[ key ], user );
             }
         } else {
             throw( message="Launch Darkly custom user attribute [#name#] is of invalid type." );
@@ -588,14 +588,14 @@ component accessors=true singleton {
 
         
         result[ 'isValid' ] = featureFlagsState.isValid();
-        result[ 'flags' ] = structMap( featureFlagsState.toValuesMap(), (k,v)=>{
+        result[ 'flags' ] = structMap( featureFlagsState.toValuesMap(), function(k,v){
             if( !withReasons ) {
                 return deserializeJSON( v.toJSONString() );
             }
             return {
                 'value': deserializeJSON( v.toJSONString() ),
                 'reason': featureFlagsState.getFlagReason( k ).toString()
-            }
+            };
          } );
         return result;
     }
@@ -779,7 +779,7 @@ component accessors=true singleton {
         log.info( 'Launch Darkly SDK shutting down.' );
         flush();
         getLDClient().close();
-        setTestData( javaCast( 'null', '' ) )
+        setTestData( javaCast( 'null', '' ) );
     }
 
 }

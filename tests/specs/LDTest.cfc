@@ -3,12 +3,10 @@
 */
 component extends="testbox.system.BaseSpec"{
 
-	SDKKey = server.system.environment.SDKKey ?: '';
-
 	function beforeAll() {
 		LD = new models.LD( {
-			SDKKey=SDKKey,
-			userProvider=()=>{ return { "Key" : "brad" }; },
+			SDKKey=getSystemSetting( 'SDKKey', '' ),
+			userProvider=function(){ return { "Key" : "brad" }; },
 			datasource:{
 				type : 'fileData',
 				fileDataPaths : expandPath( '/tests/data/test-flags.json' ),
@@ -19,7 +17,7 @@ component extends="testbox.system.BaseSpec"{
 
 	function afterAll() {
 		if( !isNull( LD ) ) {
-			LD.shutdown()
+			LD.shutdown();
 		}
 	}
 
@@ -27,28 +25,30 @@ component extends="testbox.system.BaseSpec"{
 
 		describe( "LD Client", function(){
 
-			it("can fetch a string variation", ()=>{
+			it("can fetch a string variation", function(){
+				//var td = LD.getTestData()
+				//td.update( td.flag( 'string-feature' ).variations( [ LD.getLDValue().of( 'bar' ) ] ).fallthroughVariation(0) )
 				expect( LD.stringVariation( 'string-feature', 'esfsdf' ) ).toBe( 'bar' );
 			});
 
-			it("can fetch a boolean variation", ()=>{
+			it("can fetch a boolean variation", function(){
 				expect( LD.booleanVariation( 'boolean-feature', false ) ).toBeFalse();
 				expect( LD.variation( 'boolean-feature', false ) ).toBeFalse();
 			});
 
-			it("can fetch a number variation", ()=>{
+			it("can fetch a number variation", function(){
 				expect( LD.numberVariation( 'number-feature', 23  ) ).toBe( 1 );
 				expect( LD.variation( 'number-feature', 23  ) ).toBe( 1 );
 			});
 
-			it("can fetch a json variation", ()=>{
+			it("can fetch a json variation", function(){
 				expect( LD.JSONVariation( 'json-feature', [] ) ).toBe( { "foo": "bar" } );
 				expect( LD.JSONVariation( 'json-feature', "[]" ) ).toBe( { "foo": "bar" } );
 				expect( LD.variation( 'json-feature', [] ) ).toBe( { "foo": "bar" } );
 				expect( LD.variation( 'json-feature', "[]" ) ).toBe( { "foo": "bar" } );
 			});
 
-			it("can fetch a string detail variation", ()=>{
+			it("can fetch a string detail variation", function(){
 				var result = LD.stringVariationDetail( 'string-feature', 'esfsdf' );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBe( 'bar' );
@@ -57,7 +57,7 @@ component extends="testbox.system.BaseSpec"{
 				expect( result.value ).toBe( 'bar' );
 			});
 
-			it("can fetch a boolean detail variation", ()=>{
+			it("can fetch a boolean detail variation", function(){
 				var result = LD.booleanVariationDetail( 'boolean-feature', false );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBeFalse();
@@ -67,7 +67,7 @@ component extends="testbox.system.BaseSpec"{
 				expect( result.value ).toBeFalse();
 			});
 
-			it("can fetch a number detail variation", ()=>{
+			it("can fetch a number detail variation", function(){
 				var result = LD.numberVariationDetail( 'number-feature', 23  );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBe( 1 );
@@ -77,7 +77,7 @@ component extends="testbox.system.BaseSpec"{
 				expect( result.value ).toBe( 1 );
 			});
 
-			it("can fetch a json detail variation", ()=>{
+			it("can fetch a json detail variation", function(){
 				var result = LD.JSONVariationDetail( 'json-feature', [] );
 				expect( result ).toBeStruct();
 				expect( result.value ).toBe( { "foo": "bar" } );
@@ -93,7 +93,7 @@ component extends="testbox.system.BaseSpec"{
 				expect( result.value ).toBe( { "foo": "bar" } );
 			});
 
-			it("can fetch all flags", ()=>{
+			it("can fetch all flags", function(){
 				var result = LD.getAllFlags();
 				expect( result ).toBeStruct();
 				expect( result ).toHaveKey( 'isValid' );
@@ -101,7 +101,7 @@ component extends="testbox.system.BaseSpec"{
 				expect( result.flags[ 'string-feature' ] ).toBeString();
 			});
 
-			it("can fetch all flags with reasons", ()=>{
+			it("can fetch all flags with reasons", function(){
 				var result = LD.getAllFlags( withReasons=true );
 				expect( result ).toBeStruct();
 				expect( result ).toHaveKey( 'isValid' );
@@ -112,11 +112,11 @@ component extends="testbox.system.BaseSpec"{
 				expect( result.flags[ 'string-feature' ].value ).toBeString();
 			});
 
-			it("can identiy a user", ()=>{
+			it("can identiy a user", function(){
 				LD.identifyUser( { key:'Luis' } );
 			});
 
-			it("can check the status of the SDK data store", ()=>{
+			it("can check the status of the SDK data store", function(){
 				var result = LD.getDataStoreStatus();
 				expect( result ).toBeStruct();
 				expect( result ).toHaveKey( 'detail' );
@@ -124,7 +124,7 @@ component extends="testbox.system.BaseSpec"{
 				expect( result ).toHaveKey( 'isRefreshNeeded' );
 			});
 
-			it("can check the status of the SDK data source", ()=>{
+			it("can check the status of the SDK data source", function(){
 				var result = LD.getDataSourceStatus();
 				expect( result ).toBeStruct();
 				expect( result ).toHaveKey( 'detail' );
@@ -133,46 +133,50 @@ component extends="testbox.system.BaseSpec"{
 				expect( result ).toHaveKey( 'stateSince' );
 			});
 
-			it("can track event", ()=>{
+			it("can track event", function(){
 				LD.track( 'Logged in' );
 			});
 
-			it("can track event with data", ()=>{
+			it("can track event with data", function(){
 				LD.track( eventName='invalid entries', data={ invalidItems : [ 'item 1', 'item 2' ] } );
 			});
 
-			it("can track event with metric value", ()=>{
+			it("can track event with metric value", function(){
 				LD.track( eventName='invalid entries', metricValue=42 );
 			});
 
-			it("can track event with data and metric value", ()=>{
+			it("can track event with data and metric value", function(){
 				LD.track( eventName='invalid entries', data={ invalidItems : [ 'item 1', 'item 2' ] }, metricValue=42 );
 			});
 
-			it("can recognize real flag", ()=>{
+			it("can recognize real flag", function(){
 				expect( LD.isFlagKnown( 'string-feature' ) ).toBeTrue();
 			});
 
-			it("can not recognize fake flag", ()=>{
+			it("can not recognize fake flag", function(){
 				expect( LD.isFlagKnown( 'foo-bar-123' ) ).toBeFalse();
 			});
 
-			it("can know if it is offline", ()=>{
+			it("can know if it is offline", function(){
 				expect( LD.isOffline() ).toBeFalse();
 			});
 
-			it("can add a Flag Change Listener", ()=>{
-				LD.registerFlagChangeListener( ( featureKey )=>writeDump( var="Flag [#featureKey#] changed!", output='console' ) );
+			it("can add a Flag Change Listener", function(){
+				LD.registerFlagChangeListener( function( featureKey ) {
+					writeDump( var="Flag [#featureKey#] changed!", output='console' );
+				 } );
 			});
 
-			it("can add a Flag value Change Listener", ()=>{
+			it("can add a Flag value Change Listener", function(){
 				LD.registerFlagValueChangeListener(
 					'string-feature',
-					( oldvalue, newValue )=>writeDump( var="Flag [string-feature] changed from [#oldValue#] to [#newValue#]!", output='console' )
+					function( oldvalue, newValue ) {
+						writeDump( var="Flag [string-feature] changed from [#oldValue#] to [#newValue#]!", output='console' );
+					}
 				);
 			});
 
-			it("can track custom user info", ()=>{
+			it("can track custom user info", function(){
 				LD.identifyUser( {
 					key : 'custom-user-info',
 					'foo' : 'bar',
@@ -193,4 +197,31 @@ component extends="testbox.system.BaseSpec"{
 
 	}
 
+	function getSystemSetting( required key, defaultValue ){
+		var value = getJavaSystem().getProperty( arguments.key );
+		if ( !isNull( local.value ) ) {
+			return value;
+		}
+
+		value = getJavaSystem().getEnv( arguments.key );
+		if ( !isNull( local.value ) ) {
+			return value;
+		}
+
+		if ( !isNull( arguments.defaultValue ) ) {
+			return arguments.defaultValue;
+		}
+
+		throw(
+			type   : "SystemSettingNotFound",
+			message: "Could not find a Java System property or Env setting with key [#arguments.key#]."
+		);
+	}
+
+	function getJavaSystem(){
+		if ( !structKeyExists( variables, "javaSystem" ) ) {
+			variables.javaSystem = createObject( "java", "java.lang.System" );
+		}
+		return variables.javaSystem;
+	}
 }
