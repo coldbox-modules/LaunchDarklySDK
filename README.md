@@ -4,7 +4,7 @@ A CFML SDK for LaunchDarkly feature flags
 
 ## Requirements
 
-This should run on Lucee and versions of Adobe CF modern enough to support arrow functions (2021 and 2018 Update 5+).
+This runs on Lucee 5+ and Adobe CF 2016+.
 The SDK is set up as a ColdBox module, however it will also work with WireBox standalone or just a legacy app. 
 
 ## Installation
