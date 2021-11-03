@@ -270,17 +270,26 @@ component accessors=true singleton {
             }
 
             // All aditional properties are custom fields
-            for( var name in userProps ) {
-                var value = userProps[ name ];
-                if( isSimpleValue( value ) ) {
-                    user.custom( javaCast( 'string', name ), value );
-                } else {
-                    // Turn complex values into JSON
-                    user.custom( javaCast( 'string', name ), LDValue.parse( serializeJSON( value ) ) );
-                }
-            }
+            storeCustomUserAttribute( '', userProps, user );
+
+
             return user.build();
         }
+    }
+
+    private function storeCustomUserAttribute( string name, any value, any user ) {
+        if( isSimpleValue( value ) ) {
+            user.custom( javaCast( 'string', name ), value );
+        } else if( isArray( value ) ) {
+            user.custom( javaCast( 'string', name ), LDValue.parse( serializeJSON( value ) ) );
+        } else if( isStruct( value ) ) {
+            for( var key in value ) {
+                // Turn myStruct = { foo : 'bar' } into myStruct.foo = 'bar'
+                storeCustomUserAttribute( listAppend( name, key, '.' ), value[ key ], user )
+            }
+        } else {
+            throw( message="Launch Darkly custom user attribute [#name#] is of invalid type." );
+        }            
     }
 
     function buildEvaluationDetail( required evaluationDetail ) {

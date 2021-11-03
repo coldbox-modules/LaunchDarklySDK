@@ -173,11 +173,23 @@ component extends="testbox.system.BaseSpec"{
 			});
 
 			it("can track custom user info", ()=>{
-				expect( LD.stringVariation( 'string-feature', 'esfsdf', { key : 'brad', foo : 'bar', baz : [ 1,2,3 ] , bum : { why : 'not?' } } ) ).toBe( 'bar' );
+				LD.identifyUser( {
+					key : 'custom-user-info',
+					'foo' : 'bar',
+					'baz' : [ 1,2,3 ],
+					'bum' : {
+						'why' : 'not?',
+						'nest' : [ 'me', 'here' ],
+						'also' : {
+							'this' : 'one',
+							'as' : 'well'
+						}
+					}
+				} );
+				
 			});
 
 		});
-
 
 	}
 
