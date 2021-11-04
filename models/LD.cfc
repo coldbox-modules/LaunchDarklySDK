@@ -228,44 +228,44 @@ component accessors=true singleton {
                 .build();
         } else {
             var user = LDUserBuilder
-                .init( userProps.key );
+                .init( javaCast( 'string', userProps.key ) );
             
             userProps = duplicate( userProps );
             
             userProps.delete( 'key' );
 
             if( userProps.keyExists( 'country' ) ) {
-                user.country( userProps.country );
+                user.country( javaCast( 'string', userProps.country ) );
                 userProps.delete( 'country' );
             }
             if( userProps.keyExists( 'avatar' ) ) {
-                user.avatar( userProps.avatar );
+                user.avatar( javaCast( 'string', userProps.avatar ) );
                 userProps.delete( 'avatar' );
             }
             if( userProps.keyExists( 'email' ) ) {
-                user.email( userProps.email );
+                user.email( javaCast( 'string', userProps.email ) );
                 userProps.delete( 'email' );
             }
             if( userProps.keyExists( 'firstName' ) ) {
-                user.firstName( userProps.firstName );
+                user.firstName( javaCast( 'string', userProps.firstName ) );
                 userProps.delete( 'firstName' );
             }
             if( userProps.keyExists( 'lastName' ) ) {
-                user.lastName( userProps.lastName );
+                user.lastName( javaCast( 'string', userProps.lastName ) );
                 userProps.delete( 'lastName' );
             }
             if( userProps.keyExists( 'name' ) ) {
-                user.name( userProps.name );
+                user.name( javaCast( 'string', userProps.name ) );
                 userProps.delete( 'name' );
             }
             if( userProps.keyExists( 'ip' ) ) {
-                user.ip( userProps.ip );
+                user.ip( javaCast( 'string', userProps.ip ) );
                 userProps.delete( 'ip' );
             } else {
-                user.ip( CGI.REMOTE_ADDR );
+                user.ip( javaCast( 'string', CGI.REMOTE_ADDR ) );
             }
             if( userProps.keyExists( 'secondary' ) ) {
-                user.secondary( userProps.secondary );
+                user.secondary( javaCast( 'string', userProps.secondary ) );
                 userProps.delete( 'secondary' );
             }
 
@@ -765,7 +765,7 @@ component accessors=true singleton {
         return getLDClient().isOffline();
     }
 
-    /**
+    /**+
     * Flushes all pending events.
     */
     function flush() {

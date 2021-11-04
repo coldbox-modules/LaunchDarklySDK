@@ -178,7 +178,15 @@ component extends="testbox.system.BaseSpec"{
 
 			it("can track custom user info", function(){
 				LD.identifyUser( {
-					key : 'custom-user-info',
+					'key' : 'custom-user-info',
+					'country' : 'USA',
+					'avatar' : 'my-avatar',
+					'email' : 'test@foo.com',
+					'firstName' : 'Brad',
+					'lastName' : 'Wood',
+					'name' : 'Brad Wood',
+					'ip' : '127.0.0.1',
+					'secondary' : 'secondary',
 					'foo' : 'bar',
 					'baz' : [ 1,2,3 ],
 					'bum' : {
