@@ -201,6 +201,13 @@ component extends="testbox.system.BaseSpec"{
 				
 			});
 
+			it("can track numeric user key", function(){
+				LD.identifyUser( {
+					'key' : 42
+				} );
+				
+			});
+
 		});
 
 	}
