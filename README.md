@@ -132,6 +132,17 @@ Here's a list of the currently-support config items.  These can go in your `/con
 }
 ```
 
+Note, for older versions of Adobe ColdFusion, you'll need to use this closure syntax:
+```js
+{
+        SDKKey : 'my-key',
+        userProvider=function(){
+            // Logic here
+        }
+}
+```
+
+
 ## Check feature variations
 
 You can get a variation value like so.  Note, the type of data coming back will depend on what type is set in the feature flag config in the Launchdarkly console.  A default value that matches the feature data type is always required.
@@ -230,6 +241,32 @@ One of the cool features of the Launchdarkly SDK is you can "push" out events to
         {
             featureKey : 'another-feature',
             udf : ( oldValue, newValue )=>{}
+        }
+    ]
+}
+```
+
+
+Note, for older versions of Adobe ColdFusion, you'll need to use this closure syntax:
+```js
+{
+    SDKKey='my-key',
+    flagChangeListener=function( featureKey ) {
+        writeDump( var="Flag [#featureKey#] changed!", output='console' );
+    },
+    flagValueChangeListeners=[
+        {
+            featureKey : 'test',
+            user : { key : 12345 },
+            udf : function( oldValue, newValue ) {
+                writeDump( var="Flag [test] changed from [#oldValue#] to [#newValue#]!", output='console' );
+            }
+        },
+        {
+            featureKey : 'another-feature',
+            udf : function( oldValue, newValue ){
+                
+            }
         }
     ]
 }
