@@ -15,7 +15,7 @@ component {
                 fileDataIgnoreDuplicates : true,
                 fileDataAutoUpdate : false
             },
-            userProvider : function(){ return {}; },
+            userProvider : defaultUserProvider,
             flagChangeListener : '',
             // flagChangeListener : ( featureKey )=>writeDump( var="Flag [#featureKey#] changed!", output='console' );
             flagValueChangeListeners : [
@@ -32,6 +32,10 @@ component {
                 */
             ]
         };
+    }
+
+    function defaultUserProvider(){
+        return {};
     }
 
 }
