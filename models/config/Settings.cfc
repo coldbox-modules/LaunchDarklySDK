@@ -34,6 +34,7 @@ component {
         };
     }
 
+    // Avoiding a closure by default to work around a silly Adobe ColdFusion 2016 bug
     function defaultUserProvider(){
         return {};
     }
