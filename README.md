@@ -119,10 +119,10 @@ Here's a list of the currently-support config items.  These can go in your `/con
         userProvider=()=>{
             if( session.keyExists( 'user' ) ) {
                 return {
-                    key : session.user.id,
-                    name : session.user.fullname,
-                    email : session.user.email,
-                    country : session.user.country
+                    'key' : session.user.id,
+                    'name' : session.user.fullname,
+                    'email' : session.user.email,
+                    'country' : session.user.country
                 };
             } else {
                 // Anonymous
@@ -131,8 +131,11 @@ Here's a list of the currently-support config items.  These can go in your `/con
         }
 }
 ```
+Additional Notes: 
 
-Note, for older versions of Adobe ColdFusion, you'll need to use this closure syntax:
+LaunchDarkly is case-sensitive for the attribute names, so be sure to quote them as shown above if you are on a CF version that will uppercase struct key names, as you otherwise may have issues with targeting based on those custom attributes.
+
+Also, for older versions of Adobe ColdFusion, you'll need to use this closure syntax:
 ```js
 {
         SDKKey : 'my-key',
