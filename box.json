@@ -1,6 +1,6 @@
 {
     "dependencies":{
-        "launchdarkly-java-server-sdk":"jar:https://search.maven.org/remotecontent?filepath=com/launchdarkly/launchdarkly-java-server-sdk/5.6.2/launchdarkly-java-server-sdk-5.6.2.jar"
+        "launchdarkly-java-server-sdk":"jar:https://search.maven.org/remotecontent?filepath=com/launchdarkly/launchdarkly-java-server-sdk/6.0.6/launchdarkly-java-server-sdk-6.0.6.jar"
     },
     "devDependencies":{
         "testbox":"^4.4.0-snapshot"
