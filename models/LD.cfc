@@ -200,7 +200,9 @@ component accessors=true singleton {
         - lastName
         - name
         - ip
-        - secondary
+
+    * Note `secondary` is no longer a default user/context attribute 
+        and will be treated as a custom attribute 
     *
     * All other keys will be added as custom properties.  Complex values will be 
     * serialized to JSON and added as an LDValue
@@ -263,10 +265,6 @@ component accessors=true singleton {
                 userProps.delete( 'ip' );
             } else {
                 user.ip( javaCast( 'string', CGI.REMOTE_ADDR ) );
-            }
-            if( userProps.keyExists( 'secondary' ) ) {
-                user.secondary( javaCast( 'string', userProps.secondary ) );
-                userProps.delete( 'secondary' );
             }
 
             // All aditional properties are custom fields
@@ -723,9 +721,9 @@ component accessors=true singleton {
             .getFlagTracker()
             .addFlagChangeListener( 
                 createDynamicProxy(
-					new proxies.FlagChangeListener( arguments.udf ),
-					[ "com.launchdarkly.sdk.server.interfaces.FlagChangeListener" ]
-				)
+                    new proxies.FlagChangeListener( arguments.udf ),
+                    [ "com.launchdarkly.sdk.server.interfaces.FlagChangeListener" ]
+                )
              );
     }
 
@@ -752,9 +750,9 @@ component accessors=true singleton {
                 javaCast( 'string', featureKey ),
                 buildLDUser( user ),
                 createDynamicProxy(                    
-					new proxies.FlagValueChangeListener( arguments.udf ),
-					[ "com.launchdarkly.sdk.server.interfaces.FlagValueChangeListener" ]
-				)                
+                    new proxies.FlagValueChangeListener( arguments.udf ),
+                    [ "com.launchdarkly.sdk.server.interfaces.FlagValueChangeListener" ]
+                )                
              );
     }
 
