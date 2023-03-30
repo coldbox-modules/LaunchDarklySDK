@@ -219,6 +219,7 @@ component extends="testbox.system.BaseSpec"{
 			});
 
 			describe("SDK Lifecycle Operations", function(){
+
 				it("can know if it is offline", function(){
 					expect( LD.isOffline() ).toBeFalse();
 				});
@@ -239,11 +240,6 @@ component extends="testbox.system.BaseSpec"{
 				});
 
 			});
-			
-
-			
-
-
 
 		});
 
