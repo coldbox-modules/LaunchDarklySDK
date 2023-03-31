@@ -95,9 +95,15 @@ component extends="testbox.system.BaseSpec"{
 				});
 
 				it("can correctly target a flag variation based on the user", function() {
+					
+					/* I evaluate the test flag using the UserProvider function defined in the 
+					   LD configuration code in the beforeAll() method above */
 					var resultForTargetedUser = LD.stringVariation('string-feature-with-targeting', "DEFAULT");
 					expect ( resultForTargetedUser ).toBe( "Targeted Variation" );
 
+					/* I evaluate the test flag using a custom user object passed into the stringVariation method
+					   so that I can test a scenario where LD evaluates the flag on behalf of a different user
+						 for targeting purposes */
 					var resultForNontargetedUser = LD.stringVariation('string-feature-with-targeting', "DEFAULT", {"key": "NotBrad"});
 					expect ( resultForNontargetedUser ).toBe( "Catch-all Variation" );
 				});
