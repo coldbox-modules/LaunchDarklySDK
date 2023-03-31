@@ -23,7 +23,7 @@
             "trackEvents": false,
             "trackEventsFallthrough": false,
             "debugEventsUntilDate": null,
-            "version": 2,
+            "version": 3,
             "deleted": false
         },
         "json-feature": {
@@ -55,7 +55,7 @@
             "trackEvents": false,
             "trackEventsFallthrough": false,
             "debugEventsUntilDate": null,
-            "version": 2,
+            "version": 12,
             "deleted": false
         },
         "number-feature": {
@@ -82,7 +82,7 @@
             "trackEvents": false,
             "trackEventsFallthrough": false,
             "debugEventsUntilDate": null,
-            "version": 3,
+            "version": 4,
             "deleted": false
         },
         "string-feature": {
@@ -108,7 +108,43 @@
             "trackEvents": false,
             "trackEventsFallthrough": false,
             "debugEventsUntilDate": null,
-            "version": 2,
+            "version": 3,
+            "deleted": false
+        },
+        "string-feature-with-targeting": {
+            "key": "string-feature-with-targeting",
+            "on": true,
+            "prerequisites": [],
+            "targets": [
+                {
+                    "contextKind": "user",
+                    "variation": 1,
+                    "values": [
+                        "brad"
+                    ]
+                }
+            ],
+            "contextTargets": [],
+            "rules": [],
+            "fallthrough": {
+                "variation": 0
+            },
+            "offVariation": 2,
+            "variations": [
+                "Catch-all Variation",
+                "Targeted Variation",
+                "Off Variation"
+            ],
+            "clientSideAvailability": {
+                "usingMobileKey": false,
+                "usingEnvironmentId": false
+            },
+            "clientSide": false,
+            "salt": "e29d0c75899b4b5cf349b57c282a4e6d",
+            "trackEvents": false,
+            "trackEventsFallthrough": false,
+            "debugEventsUntilDate": null,
+            "version": 3,
             "deleted": false
         }
     }

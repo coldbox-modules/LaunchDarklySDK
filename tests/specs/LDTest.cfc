@@ -9,7 +9,7 @@ component extends="testbox.system.BaseSpec"{
 			userProvider=function(){ return { "Key" : "brad" }; },
 			datasource:{
 				type : 'fileData',
-				fileDataPaths : expandPath( '/tests/data/test-flags-v6.json' ),
+				fileDataPaths : expandPath( '/tests/data/test-flags.json' ),
 				fileDataAutoUpdate : true
 			} 
 		} );
