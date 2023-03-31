@@ -220,7 +220,6 @@ The only required key in your struct is `key` which needs to be unique to each u
 * `lastName`
 * `name` -- Full name
 * `ip`
-* `secondary` -- The secondary key for a user.
 
 All other keys will be added as custom properties.  Complex values will be serialized to JSON and added as an LDValue.  You can include anything you want here including the user's role, status, preferences, etc.  This data will be available in LaunchDarkly to create segments out of so you can target very specific groups of users such as "All admin users in Florida with purchases in the last 6 months".
 
