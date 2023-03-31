@@ -55,7 +55,7 @@
             "trackEvents": false,
             "trackEventsFallthrough": false,
             "debugEventsUntilDate": null,
-            "version": 12,
+            "version": 3,
             "deleted": false
         },
         "number-feature": {
@@ -144,7 +144,7 @@
             "trackEvents": false,
             "trackEventsFallthrough": false,
             "debugEventsUntilDate": null,
-            "version": 3,
+            "version": 1,
             "deleted": false
         }
     }
