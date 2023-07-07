@@ -28,6 +28,7 @@
         "**/.*",
         "/tests",
         "*.md",
-        "/server.json"
+        "/server.json",
+        "/server*.json"
     ]
 }
