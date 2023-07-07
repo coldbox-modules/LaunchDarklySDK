@@ -13,14 +13,15 @@ component accessors=true singleton {
 	property name="coldbox";
 	property name="isColdBoxLinked";
 	property name="log";
-    
+
 	property name="LDClient";
 	property name="testData";
 	property name="LDValue";
 
 
     LDConfigBuilder = createObject( 'java', 'com.launchdarkly.sdk.server.LDConfig$Builder' );
-    LDUserBuilder = createObject( 'java', 'com.launchdarkly.sdk.LDUser$Builder' );
+    LDContext = createObject( 'java', 'com.launchdarkly.sdk.LDContext' );
+    LDContextKind = createObject( 'java', 'com.launchdarkly.sdk.ContextKind' );
     LDValue = createObject( 'java', 'com.launchdarkly.sdk.LDValue' );
     FlagsStateOption = createObject( 'java', 'com.launchdarkly.sdk.server.FlagsStateOption' );
     Duration = createObject( 'java', 'java.time.Duration' );
@@ -42,23 +43,23 @@ component accessors=true singleton {
 		if( arguments.settings.count() ) {
 			configure();
 		}
-		
+
 		return this;
 	}
 
 	/**
 	 * onDIComplete
-	 */	
+	 */
 	function onDIComplete() {
 		// If we have WireBox, see if we can get ColdBox
 		if( !isNull( wirebox ) ) {
-			// backwards compat with older versions of ColdBox 
+			// backwards compat with older versions of ColdBox
 			if( wirebox.isColdBoxLinked() ) {
 			    setColdBox( wirebox.getColdBox() );
-			    setSettings( wirebox.getInstance( dsl='box:moduleSettings:LaunchDarklySDK' ) );   
+			    setSettings( wirebox.getInstance( dsl='box:moduleSettings:LaunchDarklySDK' ) );
 			}
 		}
-		
+
 		configure();
 	}
 
@@ -116,11 +117,11 @@ component accessors=true singleton {
                     settings.datasource.fileDataPaths = listToArray( settings.datasource.fileDataPaths );
                 }
                 if( !settings.datasource.fileDataPaths.len() ) {
-                    throw( message="No Launch Darkly fileDataPaths specified." );
+                    throw( message="No Launch Darkly fileDataPaths specified.", type='launchDarkly.missingFileDataPath' );
                 }
                 settings.datasource.fileDataPaths.each( function(p){
                     if( !fileExists( p ) ) {
-                        throw( message="Launch Darkly fileDataPath [#p#] is invalid (does not exist)." );
+                        throw( message="Launch Darkly fileDataPath [#p#] is invalid (does not exist).", type='launchDarkly.invalidFileDataPath' );
                     }
                 } );
 
@@ -133,7 +134,7 @@ component accessors=true singleton {
                     settings.datasource.fileDataAutoUpdate = false;
                 }
 
-                configBuilder.dataSource( 
+                configBuilder.dataSource(
                     fileData.datasource()
                         .filePaths( javacast( 'String[]', settings.datasource.fileDataPaths ) )
                         .autoUpdate( settings.datasource.fileDataAutoUpdate )
@@ -141,10 +142,10 @@ component accessors=true singleton {
                        );
 
             } else if( settings.datasource.type != 'default' ) {
-                throw( message="Unkown Launch Darkly datasource type [#settings.datasource.type#].", detail="Valid datasoruce types are default, fileData, and testData" );
+                throw( message="Unkown Launch Darkly datasource type [#settings.datasource.type#].", detail="Valid datasoruce types are default, fileData, and testData", type='launchDarkly.invalidDatasourceType' );
             }
         }
-        
+
         var config = configBuilder.build();
 
         setLDClient( createObject( 'java', 'com.launchdarkly.sdk.server.LDClient' ).init( settings.SDKKey, config ) );
@@ -170,10 +171,10 @@ component accessors=true singleton {
 
     /**
     * Get the default settings for the client.  This is only used when outside
-    * of ColdBox and will read the "settings" struct from the ModuleConfig.cfc to 
+    * of ColdBox and will read the "settings" struct from the ModuleConfig.cfc to
     * mimic how ColdBox loads default module settings
     *
-    * 
+    *
     * @returns A struct of default settings, or an empty struct if an error occurs reading the default settings.
     */
     function getDefaultSettings() {
@@ -189,105 +190,97 @@ component accessors=true singleton {
     }
 
     /**
-    * Create an LDUser object out of a struct of properties.  If no properties are 
-    * passed, the default userProvider UDF will be used.
-    * 
-    * The following keys will be mapped to the internal properties of the same name
-    *   - country
-        - avatar
-        - email
-        - firstName
-        - lastName
-        - name
-        - ip
-
-    * Note `secondary` is no longer a default user/context attribute 
-        and will be treated as a custom attribute 
+    * Create an LDContext object out of a struct of properties.  If no properties are
+    * passed, the default contextProvider UDF will be used.
     *
-    * All other keys will be added as custom properties.  Complex values will be 
+    * All keys other than "key" and "kind" will be added as custom properties.  Complex values will be
     * serialized to JSON and added as an LDValue
     *
-    * @userProps A struct containing at least a "key" key to uniquely identify the user
+    * @contextProps A struct containing at least a "key" key to uniquely identify the context. Can also be an array of structs which will create a multi-context.
     *
-    * @returns An LDUser object
-    * https://launchdarkly.github.io/java-server-sdk/com/launchdarkly/sdk/LDUser.html
+    * @returns An LDContext object
+    * https://javadoc.io/doc/com.launchdarkly/launchdarkly-java-server-sdk/6.0.0/com/launchdarkly/sdk/LDContext.html
     */
-    private function buildLDUser( userProps={} ) {
+    private function buildLDContext( any contextProps={} ) {
 
-        if( isNull( userProps ) || !userProps.count() ) {
-            userProps = settings.userProvider();
+        if( isArray( contextProps ) ) {
+            // Build each struct into an array and then assemble a multi-context from them
+            return LDContext.createMulti( contextProps.map( (c)=>buildLDContext( c ) ) );
         }
 
-        if( userProps.count() && !userProps.keyExists( 'key' ) ) {
-            throw( "Launch Darkly requires a unique [key] propery to identify your user." );
+        if( isNull( contextProps ) || !contextProps.count() ) {
+            // Backwards compat for old closure name
+            if( !isNull( settings.userProvider ) ) {
+                contextProps = settings.userProvider();
+            } else {
+                contextProps = settings.contextProvider();
+            }
         }
 
-        // Anon user
-        if( !userProps.count() ) {
-            return LDUserBuilder
-                .init( 'anonymous' )
+        if( contextProps.count() && !contextProps.keyExists( 'key' ) ) {
+            throw( message="Launch Darkly requires a unique [key] propery to identify your context.", type='launchDarkly.invalidContextMissingKey' );
+        }
+        var contextKind = LDContextKind.DEFAULT;
+        if( !isNull( contextProps.kind ) ) {
+            if( reFind( '[^a-zA-Z0-9\._-]', contextProps.kind ) || contextProps.kind == 'kind' || contextProps.kind == 'multi' ) {
+                throw( message='The context kind [#contextProps.kind#] is invalid.  Only letters, numbers, and the characters ".", "_", and "-" are allowed and the kind cannot be the string "kind" or "mulit".', type='launchDarkly.invalidContextKind' );
+            }
+            contextKind = LDContextKind.of( contextProps.kind );
+        }
+
+        // Anon context
+        if( !contextProps.count() ) {
+            return LDContext.builder( contextKind, 'anonymous' )
                 .anonymous( true )
                 .build();
         } else {
-            var user = LDUserBuilder
-                .init( javaCast( 'string', userProps.key ) );
-            
-            userProps = duplicate( userProps );
-            
-            userProps.delete( 'key' );
+            var context = LDContext.builder( contextKind, javaCast( 'string', contextProps.key ) );
 
-            if( userProps.keyExists( 'country' ) ) {
-                user.country( javaCast( 'string', userProps.country ) );
-                userProps.delete( 'country' );
-            }
-            if( userProps.keyExists( 'avatar' ) ) {
-                user.avatar( javaCast( 'string', userProps.avatar ) );
-                userProps.delete( 'avatar' );
-            }
-            if( userProps.keyExists( 'email' ) ) {
-                user.email( javaCast( 'string', userProps.email ) );
-                userProps.delete( 'email' );
-            }
-            if( userProps.keyExists( 'firstName' ) ) {
-                user.firstName( javaCast( 'string', userProps.firstName ) );
-                userProps.delete( 'firstName' );
-            }
-            if( userProps.keyExists( 'lastName' ) ) {
-                user.lastName( javaCast( 'string', userProps.lastName ) );
-                userProps.delete( 'lastName' );
-            }
-            if( userProps.keyExists( 'name' ) ) {
-                user.name( javaCast( 'string', userProps.name ) );
-                userProps.delete( 'name' );
-            }
-            if( userProps.keyExists( 'ip' ) ) {
-                user.ip( javaCast( 'string', userProps.ip ) );
-                userProps.delete( 'ip' );
-            } else {
-                user.ip( javaCast( 'string', CGI.REMOTE_ADDR ) );
+            contextProps = duplicate( contextProps );
+
+            contextProps.delete( 'key' );
+
+            if( contextKind.toString() == 'user' && !contextProps.keyExists( 'ip' ) ) {
+                contextProps['ip'] = CGI.REMOTE_ADDR;
             }
 
             // All aditional properties are custom fields
-            storeCustomUserAttribute( '', userProps, user );
+            if( settings.contextExplodeStructAttributes ) {
+                storeCustomcontextAttributeLegacy( '', contextProps, context );
+            } else {
+                storeCustomContextAttribute( contextProps, context );
+            }
 
 
-            return user.build();
+            return context.build();
         }
     }
 
-    private function storeCustomUserAttribute( string name, any value, any user ) {
+    private function storeCustomcontextAttribute( any contextProps, any context ) {
+        contextProps.each( ( name, value )=>{
+            if( isSimpleValue( value ) ) {
+                context.set( javaCast( 'string', name ), value );
+            } else if( isArray( value ) || isStruct( value ) ) {
+                context.set( javaCast( 'string', name ), LDValue.parse( serializeJSON( value ) ) );
+            } else {
+                throw( message="Launch Darkly custom context attribute [#name#] is of invalid type.  Only simple values, arrays, and structs are allowed.", type='launchDarkly.invalidContextPropertyType' );
+            }
+        } );
+    }
+
+    private function storeCustomcontextAttributeLegacy( string name, any value, any context ) {
         if( isSimpleValue( value ) ) {
-            user.custom( javaCast( 'string', name ), value );
+            context.set( javaCast( 'string', name ), value );
         } else if( isArray( value ) ) {
-            user.custom( javaCast( 'string', name ), LDValue.parse( serializeJSON( value ) ) );
+            context.set( javaCast( 'string', name ), LDValue.parse( serializeJSON( value ) ) );
         } else if( isStruct( value ) ) {
             for( var key in value ) {
                 // Turn myStruct = { foo : 'bar' } into myStruct.foo = 'bar'
-                storeCustomUserAttribute( listAppend( name, key, '.' ), value[ key ], user );
+                storeCustomContextAttribute( listAppend( name, key, '.' ), value[ key ], context );
             }
         } else {
-            throw( message="Launch Darkly custom user attribute [#name#] is of invalid type." );
-        }            
+            throw( message="Launch Darkly custom context attribute [#name#] is of invalid type.  Only simple values, arrays, and structs are allowed.", type='launchDarkly.invalidContextPropertyType' );
+        }
     }
 
     function buildEvaluationDetail( required evaluationDetail ) {
@@ -301,7 +294,7 @@ component accessors=true singleton {
         result[ 'detail' ] = evaluationDetail.toString();
         result[ 'variationIndex' ] = evaluationDetail.getVariationIndex() ?: '';
         result[ 'isDefault' ] = evaluationDetail.isDefaultValue() ?: '';
-        
+
         result[ 'reason' ] = {};
         result.reason[ 'detail' ] = reason.toString();
         result.reason[ 'exception' ] = reason.getException() ?: '';
@@ -319,38 +312,40 @@ component accessors=true singleton {
     * SDK Methods
     ******************************************************************************** */
 
-    
+
     /**
     * Get a variation
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A boolean representing the matching variation
     */
     any function variation(
         required string featureKey,
         required any defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         return JSONVariation( argumentCollection=arguments );
     }
-    
+
     /**
     * Get a variation and detail explanation of why it was chosen
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A struct contaning the explanation in a "detail" key and a boolean representing the matching variation in a "value" key.
     */
     struct function variationDetail(
         required string featureKey,
         required any defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         return JSONVariationDetail( argumentCollection=arguments );
     }
 
@@ -360,81 +355,85 @@ component accessors=true singleton {
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A string representing the matching variation
     */
     string function stringVariation(
         required string featureKey,
         required string defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         return getLDClient()
             .stringVariation(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
+                buildLDContext( context ),
                 javaCast( 'string', defaultValue )
             );
     }
-    
+
     /**
     * Get a boolean variation
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A boolean representing the matching variation
     */
     boolean function booleanVariation(
         required string featureKey,
         required boolean defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         return getLDClient()
             .boolVariation(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
+                buildLDContext( context ),
                 javaCast( 'boolean', defaultValue )
             );
     }
-    
+
     /**
     * Get a numeric variation
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A number representing the matching variation
     */
     numeric function numberVariation(
         required string featureKey,
         required numeric defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         return getLDClient()
             .doubleVariation(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
+                buildLDContext( context ),
                 javaCast( 'double', defaultValue )
             );
     }
-    
+
     /**
     * Get a JSON variation
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default. Can be JSON or any complex value
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A deserialized object representing the matching variation
     */
     any function JSONVariation(
         required string featureKey,
         required any defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         if( !isJSON( defaultValue ) ) {
             defaultValue = serializeJSON( defaultValue );
         }
@@ -444,7 +443,7 @@ component accessors=true singleton {
         var result = getLDClient()
             .jsonValueVariation(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
+                buildLDContext( context ),
                 LDValue.parse( defaultValue )
             );
 
@@ -457,87 +456,91 @@ component accessors=true singleton {
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A struct contaning the explanation in a "detail" key and a string representing the matching variation in a "value" key.
     */
     struct function stringVariationDetail(
         required string featureKey,
         required string defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         var result = {};
         var evaluationDetail = getLDClient()
             .stringVariationDetail(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
+                buildLDContext( context ),
                 javaCast( 'string', defaultValue )
             );
         return buildEvaluationDetail( evaluationDetail );
     }
-    
+
     /**
     * Get a boolean variation and detail explanation of why it was chosen
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A struct contaning the explanation in a "detail" key and a boolean representing the matching variation in a "value" key.
     */
     struct function booleanVariationDetail(
         required string featureKey,
         required boolean defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         var result = {};
         var evaluationDetail = getLDClient()
             .boolVariationDetail(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
+                buildLDContext( context ),
                 javaCast( 'boolean', defaultValue )
             );
         return buildEvaluationDetail( evaluationDetail );
     }
-    
+
     /**
     * Get a numeric variation and detail explanation of why it was chosen
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A struct contaning the explanation in a "detail" key and a number representing the matching variation in a "value" key.
     */
     struct function numberVariationDetail(
         required string featureKey,
         required numeric defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         var result = {};
         var evaluationDetail = getLDClient()
             .doubleVariationDetail(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
+                buildLDContext( context ),
                 javaCast( 'double', defaultValue )
             );
         return buildEvaluationDetail( evaluationDetail );
     }
-    
+
     /**
     * Get a JSON variation and detail explanation of why it was chosen
     *
     * @featureKey Name of the feature key you'd like to check
     * @defaultvalue The value to return by default. Can be JSON or any complex value
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     *
     * @returns A struct contaning the explanation in a "detail" key and a deserialized object representing the matching variation in a "value" key.
     */
     struct function JSONVariationDetail(
         required string featureKey,
         required any defaultValue,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         if( !isJSON( defaultValue ) ) {
             defaultValue = serializeJSON( defaultValue );
         }
@@ -546,17 +549,17 @@ component accessors=true singleton {
         var evaluationDetail = getLDClient()
             .jsonValueVariationDetail(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
+                buildLDContext( context ),
                 LDValue.parse( defaultValue )
             );
         return buildEvaluationDetail( evaluationDetail );
     }
 
-    
+
     /**
-    * Get all flags for a user
+    * Get all flags for a context
     *
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     * @clientSideOnly Specifies that only flags marked for use with the client-side SDK should be included in the state object.
     * @detailsOnlyForTrackedFlags pecifies that any flag metadata that is normally only used for event generation - such as flag versions and evaluation reasons - should be omitted for any flag that does not have event tracking or debugging turned on.
     * @withReasons Specifies that EvaluationReason data should be captured in the state object.
@@ -564,12 +567,13 @@ component accessors=true singleton {
     * @returns A struct
     */
     struct function getAllFlags(
-        struct user={},
+        any context={},
         boolean clientSideOnly=false,
         boolean detailsOnlyForTrackedFlags=false,
         boolean withReasons=false
     ) {
 
+        arguments.context = arguments.user ?: arguments.context;
         var result = {};
         var options = [];
         if( clientSideOnly ) {
@@ -582,9 +586,9 @@ component accessors=true singleton {
             options.append( FlagsStateOption.WITH_REASONS );
         }
         var featureFlagsState = getLDClient()
-            .allFlagsState( buildLDUser( user ), options );
+            .allFlagsState( buildLDContext( context ), options );
 
-        
+
         result[ 'isValid' ] = featureFlagsState.isValid();
         result[ 'flags' ] = structMap( featureFlagsState.toValuesMap(), function(k,v){
             if( !withReasons ) {
@@ -597,23 +601,36 @@ component accessors=true singleton {
          } );
         return result;
     }
-    
+
     /**
-    * creates or updates users in LaunchDarkly, which makes them available for targeting and autocomplete on the dashboard.
+    * creates or updates contexts in LaunchDarkly, which makes them available for targeting and autocomplete on the dashboard.
     *
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
+    */
+    function identifyContext(
+        any context={}
+    ) {
+        arguments.context = arguments.user ?: arguments.context;
+        getLDClient()
+            .identify( buildLDContext( context ) );
+    }
+
+    /**
+    * DEPRECATED: Backwards compat. Use identifyContext() now.
+    * creates or updates contexts in LaunchDarkly, which makes them available for targeting and autocomplete on the dashboard.
+    *
+    * @user A struct containing at least a "key" key to uniquely identify the context
     */
     function identifyUser(
         struct user={}
     ) {
-        getLDClient()
-            .identify( buildLDUser( user ) );
+        identifyContext( user );
     }
-    
+
     /**
     * Get's the status of the SDK's data store
     *
-    * @user A struct with the keys isAvailable, isRefreshNeeded, and detail
+    * @returns A struct with the keys isAvailable, isRefreshNeeded, and detail
     */
     function getDataStoreStatus() {
         var result = {};
@@ -624,11 +641,11 @@ component accessors=true singleton {
         result[ 'detail' ] = status.toString();
         return result;
     }
-    
+
     /**
     * Get's the status of the SDK's data source
     *
-    * @user A struct with the keys isAvailable, isRefreshNeeded, and detail
+    * @returns A struct with the keys isAvailable, isRefreshNeeded, and detail
     */
     function getDataSourceStatus() {
         var result = {};
@@ -639,27 +656,27 @@ component accessors=true singleton {
         result[ 'lastError' ] = '';
         if( !isNull( status.getLastError() ) ) {
             result[ 'lastError' ] = status.getLastError().toString();
-        }                
+        }
         result[ 'detail' ] = status.toString();
         return result;
     }
-    
+
     /**
-    * Tracks that a user performed an event.
+    * Tracks that a context performed an event.
     *
     * @eventName the name of the event
-    * @user A struct containing at least a "key" key to uniquely identify the user
+    * @context A struct containing at least a "key" key to uniquely identify the context
     * @data additional data associated with the event.  Can be simple or complex values
     * @metricValue a numeric value used by the LaunchDarkly experimentation feature in numeric custom metrics. Can be omitted if this event is used by only non-numeric metrics. This field will also be returned as part of the custom event for Data Export.
     */
     function track(
         required string eventName,
-        struct user={},
+        any context={},
         any data,
         numeric metricValue
     ) {
-
-        user = buildLDUser( user );
+        arguments.context = arguments.user ?: arguments.context;
+        context = buildLDContext( context );
         if( !isNull( data ) && !isJSON( data ) ) {
             data = LDValue.parse( serializeJSON( data ) );
         }
@@ -668,7 +685,7 @@ component accessors=true singleton {
             getLDClient()
                 .trackMetric(
                     javaCast( 'string', eventName ),
-                    user,
+                    context,
                     ( isNull( data ) ? javaCast( 'null', '' ) : data ),
                     javaCast( 'double', metricValue )
                 );
@@ -676,14 +693,14 @@ component accessors=true singleton {
             getLDClient()
                 .trackData(
                     javaCast( 'string', eventName ),
-                    user,
-                    data    
+                    context,
+                    data
                 );
         } else {
             getLDClient()
                 .track(
                     javaCast( 'string', eventName ),
-                    user
+                    context
                 );
         }
 
@@ -691,7 +708,7 @@ component accessors=true singleton {
 
     /**
     * Returns true if the specified feature flag currently exists..
-    * 
+    *
     * @featureKey Name of the feature key you'd like to check
     */
     function isFlagKnown(
@@ -705,21 +722,21 @@ component accessors=true singleton {
 
     /**
     * Registers a listener to be notified of feature flag changes in general.
-    * The listener will be notified whenever the SDK receives any change to any feature flag's configuration, or to a user segment that is referenced by a feature flag.
+    * The listener will be notified whenever the SDK receives any change to any feature flag's configuration, or to a context segment that is referenced by a feature flag.
     * If the updated flag is used as a prerequisite for other flags, the SDK assumes that those flags may now behave differently and sends flag change events for them as well.
-    * 
-    * Note that this does not necessarily mean the flag's value has changed for any particular user, only that some part of the flag configuration was changed so that 
-    * it may return a different value than it previously returned for some user. 
+    *
+    * Note that this does not necessarily mean the flag's value has changed for any particular context, only that some part of the flag configuration was changed so that
+    * it may return a different value than it previously returned for some context.
     *
     * @udf A closure which will be called any time a change is made to a flag in the LauchDarkly dashboard. The closure will receive the name of the flag as a string.
-    * 
+    *
     */
     function registerFlagChangeListener(
         required udf
     ) {
         return getLDClient()
             .getFlagTracker()
-            .addFlagChangeListener( 
+            .addFlagChangeListener(
                 createDynamicProxy(
                     new proxies.FlagChangeListener( arguments.udf ),
                     [ "com.launchdarkly.sdk.server.interfaces.FlagChangeListener" ]
@@ -729,30 +746,31 @@ component accessors=true singleton {
 
 
     /**
-    * Registers a listener to be notified of a change in a specific feature flag's value for a specific set of user properties.
-    * When you call this method, it first immediately evaluates the feature flag. It then uses a flag change listener to start listening for feature 
-    * flag configuration changes, and whenever the specified feature flag changes, it re-evaluates the flag for the same user.
+    * Registers a listener to be notified of a change in a specific feature flag's value for a specific set of context properties.
+    * When you call this method, it first immediately evaluates the feature flag. It then uses a flag change listener to start listening for feature
+    * flag configuration changes, and whenever the specified feature flag changes, it re-evaluates the flag for the same context.
     * It then calls your FlagValueChangeListener if and only if the resulting value has changed.
     *
     * @featureKey Name of the feature key you'd like to monitor
-    * @udf A closure which will be called any time a flag value changes for a given user and featureKey.  The closure will receive two args-- the old value and new value
-    * @user A struct containing at least a "key" key to uniquely identify the user
-    * 
+    * @udf A closure which will be called any time a flag value changes for a given context and featureKey.  The closure will receive two args-- the old value and new value
+    * @context A struct containing at least a "key" key to uniquely identify the context
+    *
     */
     function registerFlagValueChangeListener(
         required string featureKey,
         required udf,
-        struct user={}
+        any context={}
     ) {
+        arguments.context = arguments.user ?: arguments.context;
         return getLDClient()
             .getFlagTracker()
-            .addFlagValueChangeListener( 
+            .addFlagValueChangeListener(
                 javaCast( 'string', featureKey ),
-                buildLDUser( user ),
-                createDynamicProxy(                    
+                buildLDContext( context ),
+                createDynamicProxy(
                     new proxies.FlagValueChangeListener( arguments.udf ),
                     [ "com.launchdarkly.sdk.server.interfaces.FlagValueChangeListener" ]
-                )                
+                )
              );
     }
 

@@ -1,17 +1,14 @@
-/**
-* This tests the BDD functionality in TestBox. This is CF10+, Lucee4.5+
-*/
 component extends="testbox.system.BaseSpec"{
 
 	function beforeAll() {
 		LD = new models.LD( {
 			SDKKey=getSystemSetting( 'SDKKey', '' ),
-			userProvider=function(){ return { "Key" : "brad" }; },
+			contextProvider=function(){ return { "Key" : "brad" }; },
 			datasource:{
 				type : 'fileData',
 				fileDataPaths : expandPath( '/tests/data/test-flags.json' ),
 				fileDataAutoUpdate : true
-			} 
+			}
 		} );
 	}
 
@@ -82,34 +79,33 @@ component extends="testbox.system.BaseSpec"{
 					var result = LD.JSONVariationDetail( 'json-feature', [] );
 					expect( result ).toBeStruct();
 					expect( result.value ).toBe( { "foo": "bar" } );
-					
+
 					var result = LD.JSONVariationDetail( 'json-feature', "[]" );
 					expect( result.value ).toBe( { "foo": "bar" } );
 
 					var result = LD.variationDetail( 'json-feature', [] );
 					expect( result ).toBeStruct();
 					expect( result.value ).toBe( { "foo": "bar" } );
-					
+
 					var result = LD.variationDetail( 'json-feature', "[]" );
 					expect( result.value ).toBe( { "foo": "bar" } );
 				});
 
-				it("can correctly target a flag variation based on the user", function() {
-					
-					/* I evaluate the test flag using the UserProvider function defined in the 
-					   LD configuration code in the beforeAll() method above */
-					var resultForTargetedUser = LD.stringVariation('string-feature-with-targeting', "DEFAULT");
-					expect ( resultForTargetedUser ).toBe( "Targeted Variation" );
+				it("can correctly target a flag variation based on the context", function() {
 
-					/* I evaluate the test flag using a custom user object passed into the stringVariation method
-					   so that I can test a scenario where LD evaluates the flag on behalf of a different user
+					/* I evaluate the test flag using the contextProvider function defined in the
+					   LD configuration code in the beforeAll() method above */
+					var resultForTargetedContext = LD.stringVariation('string-feature-with-targeting', "DEFAULT");
+					expect ( resultForTargetedContext ).toBe( "Targeted Variation" );
+
+					/* I evaluate the test flag using a custom context object passed into the stringVariation method
+					   so that I can test a scenario where LD evaluates the flag on behalf of a different context
 						 for targeting purposes */
-					var resultForNontargetedUser = LD.stringVariation('string-feature-with-targeting', "DEFAULT", {"key": "NotBrad"});
-					expect ( resultForNontargetedUser ).toBe( "Catch-all Variation" );
+					var resultForNontargetedContext = LD.stringVariation('string-feature-with-targeting', "DEFAULT", {"key": "NotBrad"});
+					expect ( resultForNontargetedContext ).toBe( "Catch-all Variation" );
 				});
 
 			});
-			
 
 			describe( "Bulk Flag Operations", function() {
 				it("can fetch all flags", function(){
@@ -132,15 +128,47 @@ component extends="testbox.system.BaseSpec"{
 				});
 			});
 
-			describe("Context/User Operations", function() {
+			describe("Context Operations", function() {
 
-				it("can identiy a user", function(){
-					LD.identifyUser( { key:'Luis' } );
+				it("can identiy a context", function(){
+					LD.identifyContext( { key:'Luis' } );
 				});
 
-				it("can track custom user info", function(){
-					LD.identifyUser( {
-						'key' : 'custom-user-info',
+				it("can identiy a multi-context", function(){
+					LD.identifyContext( [
+						{
+							key:'Luis'
+						},
+						{
+							'kind':'device',
+							'key':'adroid'
+						}
+					] );
+				});
+
+				it("will reject invalid context", function(){
+
+					expect( ()=>LD.identifyContext( { key:'Luis', kind:'kind' } ) )
+					.toThrow( 'launchDarkly.invalidContextKind' );
+
+					expect( ()=>LD.identifyContext( { key:'Luis', kind:'multi' } ) )
+						.toThrow( 'launchDarkly.invalidContextKind' );
+
+					expect( ()=>LD.identifyContext( { key:'Luis', kind:'$%^&*' } ) )
+						.toThrow( 'launchDarkly.invalidContextKind' );
+
+					expect( ()=>LD.identifyContext( { foo:'bar' } ) )
+						.toThrow( 'launchDarkly.invalidContextMissingKey' );
+
+					// Can't do type checking due to this Adobe bug: https://tracker.adobe.com/#/view/CF-4218578
+					expect( ()=>LD.identifyContext( { key:'test', foo:queryNew( 'col' ) } ) )
+						.toThrow( regex='invalid' );
+
+				});
+
+				it("can track custom context info", function(){
+					LD.identifyContext( {
+						'key' : 'custom-context-info',
 						'country' : 'USA',
 						'avatar' : 'my-avatar',
 						'email' : 'test@foo.com',
@@ -160,14 +188,54 @@ component extends="testbox.system.BaseSpec"{
 							}
 						}
 					} );
-					
+
 				});
 
-				it("can track numeric user key", function(){
-					LD.identifyUser( {
+				it("can track numeric context key", function(){
+					LD.identifyContext( {
 						'key' : 42
 					} );
-					
+
+				});
+
+
+				describe("Deprecated User Operations", function() {
+
+					it("can identiy a user", function(){
+						LD.identifyUser( { key:'Luis' } );
+					});
+
+					it("can track custom user info", function(){
+						LD.identifyUser( {
+							'key' : 'custom-user-info',
+							'country' : 'USA',
+							'avatar' : 'my-avatar',
+							'email' : 'test@foo.com',
+							'firstName' : 'Brad',
+							'lastName' : 'Wood',
+							'name' : 'Brad Wood',
+							'ip' : '127.0.0.1',
+							'secondary' : 'secondary',
+							'foo' : 'bar',
+							'baz' : [ 1,2,3 ],
+							'bum' : {
+								'why' : 'not?',
+								'nest' : [ 'me', 'here' ],
+								'also' : {
+									'this' : 'one',
+									'as' : 'well'
+								}
+							}
+						} );
+
+					});
+
+					it("can track numeric user key", function(){
+						LD.identifyUser( {
+							'key' : 42
+						} );
+
+					});
 				});
 			});
 
@@ -213,7 +281,7 @@ component extends="testbox.system.BaseSpec"{
 
 			});
 
-			
+
 			describe("Flag Validation", function(){
 				it("can recognize real flag", function(){
 					expect( LD.isFlagKnown( 'string-feature' ) ).toBeTrue();

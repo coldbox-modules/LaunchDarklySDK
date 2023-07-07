@@ -6,6 +6,7 @@ component {
             diagnosticOptOut : false,
             startWaitms : 5000,
             offline : false,
+            contextExplodeStructAttributes : false,
             http : {},
             logging : {},
             dataSource : {
@@ -15,7 +16,7 @@ component {
                 fileDataIgnoreDuplicates : true,
                 fileDataAutoUpdate : false
             },
-            userProvider : defaultUserProvider,
+            contextProvider : defaultContextProvider,
             flagChangeListener : '',
             // flagChangeListener : ( featureKey )=>writeDump( var="Flag [#featureKey#] changed!", output='console' );
             flagValueChangeListeners : [
@@ -35,7 +36,7 @@ component {
     }
 
     // Avoiding a closure by default to work around a silly Adobe ColdFusion 2016 bug
-    function defaultUserProvider(){
+    function defaultContextProvider(){
         return {};
     }
 

@@ -5,7 +5,7 @@ A CFML SDK for LaunchDarkly feature flags
 ## Requirements
 
 This runs on Lucee 5+ and Adobe CF 2016+.
-The SDK is set up as a ColdBox module, however it will also work with WireBox standalone or just a legacy app. 
+The SDK is set up as a ColdBox module, however it will also work with WireBox standalone or just a legacy app.
 
 ## Installation
 
@@ -41,7 +41,7 @@ if( LD.variation(  featureKey='my-feature-flag', defaultValue=false ) ) {
     // enable awesomeness
 }
 ```
-The module will automatically shutdown the client when ColdBox reinits via the unicorn magic of ColdBox interceptors.  
+The module will automatically shutdown the client when ColdBox reinits via the unicorn magic of ColdBox interceptors.
 Configure the client in a ColdBox setting by adding to your `moduleSettings` struct in `/config/Coldbox.cfc`.  (All config values listed below)
 
 ```js
@@ -109,14 +109,14 @@ Here's a list of the currently-support config items.  These can go in your `/con
 * `diagnosticOptOut` - Set to true to opt-out of sending diagnostics data.
 * `startWaitms` - Set how long in millisecond the constructor will block awaiting a successful connection to LaunchDarkly.
 * `offline` - Set whether this client is offline.
-* `userProvider` - A closure that returns a struct of user details for the current logged-in user.  The only required key is "key" which must be unique.
-* `registerFlagChangeListener` - This is a generic listener that will be fired any time any data changes on any flag for any user. (more below)
-* `registerFlagValueChangeListener()` - This is a very specific listener that will tell you specifically when the flag variation value for a specific user changes. (more below)
+* `contextProvider` - A closure that returns a struct of context details for the current logged-in context.  The only required key is "key" which must be unique.
+* `registerFlagChangeListener` - This is a generic listener that will be fired any time any data changes on any flag for any context. (more below)
+* `registerFlagValueChangeListener()` - This is a very specific listener that will tell you specifically when the flag variation value for a specific context changes. (more below)
 
 ```js
 {
         SDKKey : 'my-key',
-        userProvider=()=>{
+        contextProvider=()=>{
             if( session.keyExists( 'user' ) ) {
                 return {
                     'key' : session.user.id,
@@ -131,7 +131,7 @@ Here's a list of the currently-support config items.  These can go in your `/con
         }
 }
 ```
-Additional Notes: 
+Additional Notes:
 
 LaunchDarkly is case-sensitive for the attribute names, so be sure to quote them as shown above if you are on a CF version that will uppercase struct key names, as you otherwise may have issues with targeting based on those custom attributes.
 
@@ -139,7 +139,7 @@ Also, for older versions of Adobe ColdFusion, you'll need to use this closure sy
 ```js
 {
         SDKKey : 'my-key',
-        userProvider=function(){
+        contextProvider=function(){
             // Logic here
         }
 }
@@ -156,7 +156,7 @@ if( LD.variation(  'my-feature-flag', false ) ) {
 }
 ```
 
-You can use the method above for all feature flag types, but there are also methods provided for each type just to match the Java SDK. 
+You can use the method above for all feature flag types, but there are also methods provided for each type just to match the Java SDK.
 
 ```js
 if( LD.booleanVariation( 'my-feature', false ) ) {
@@ -178,7 +178,7 @@ var shoppingCartConfig = LD.JSONVariation(
 
 The `JSONVariation()` method will accept a complex value as the "default" and will also deserialize whatever JSON is stored in the variation so you get back a proper struct or array.
 
-You can get a reason for the current result by calling the "detail" version of each method, which returns a struct containing both the `value` of the variation and the `detail` explanation of why it was chosen. 
+You can get a reason for the current result by calling the "detail" version of each method, which returns a struct containing both the `value` of the variation and the `detail` explanation of why it was chosen.
 
 
 ```js
@@ -190,38 +190,40 @@ if( results.value ) {
 }
 ```
 
-## Get all flags for a user
+## Get all flags for a context
 
-You can get all the flags and their current values for a user like so:
+You can get all the flags and their current values for a context like so:
 
 ```js
 var flagData = LD.getAllFlags()
 ```
 The result will be a struct with an `isValid` key that comes from the underlying Java SDK.  The flags will be in a nested struct called `flags` where the key is the name of the feature and the value is the current value.  If you pass `withReasons=true` to this method, the `flags` struct will have a nested struct for each flag containing `value` and `reason` keys similar to how `xxxVariationDetail()` works.
 
-## User Tracking
+## Context Tracking
 
-Pretty much all the SDK methods accept a struct called `user` which defines all the details of the current user.  
+Pretty much all the SDK methods accept a struct called `context` which defines all the details of the current context.  In previous SDK versions, this was called `user`.
 
 ```js
 var results = LD.booleanVariationDetail( 'my-feature', false, { key : 'brad-wood' } );
 
 var flagData = LD.getAllFlags( { key : 'luis-majano' } )
 ```
-However, the recommended approach is to use the `userProvider` setting for the library which allows you to set a single UDF that returns all the details for whatever user is currently logged in.  In this way, you can have that logic all in one place, pulling from the session scope, or wherever you track the current user.  Returning an empty struct from your `userProvider` UDF will create an "anonymous" user.  
+However, the recommended approach is to use the `contextProvider` setting for the library which allows you to set a single UDF that returns all the details for whatever context is currently logged in.  In this way, you can have that logic all in one place, pulling from the session scope, or wherever you track the current context.  Returning an empty struct from your `contextProvider` UDF will create an "anonymous" context.
 
 
-The only required key in your struct is `key` which needs to be unique to each user.  It should ideally be the primary key of your users table.  The following keys will be mapped to the internal properties of the same name:
+The only required key in your struct is `key` which needs to be unique to each context.  In the case of a user context, it should ideally be the primary key of your users table.
 
-* `country`
-* `avatar`
-* `email`
-* `firstName`
-* `lastName`
-* `name` -- Full name
-* `ip`
+You can also include a key named `kind` which defaults to "user", which is the legacy behavior of the SDK.  Any other custom string is allowed, so long as it is not the word "kind", "multi", and contains only letters, numbers, and ".", "-", "_".  Examples of non-user contexts would be device, organization, or location and would provide another way to create cross-cutting targeting of your users.
 
-All other keys will be added as custom properties.  Complex values will be serialized to JSON and added as an LDValue.  You can include anything you want here including the user's role, status, preferences, etc.  This data will be available in LaunchDarkly to create segments out of so you can target very specific groups of users such as "All admin users in Florida with purchases in the last 6 months".
+All keys other than `key` and `kind` will be added as custom properties.  Complex values will be serialized to JSON and added as an LDValue.  You can include anything you want here including the user's role, status, preferences, etc.  This data will be available in LaunchDarkly to create segments out of so you can target very specific groups of contexts such as "All admin users in Florida with purchases in the last 6 months".
+
+You can also use LaunchDarkly's multi-context features by specifying an array of context structs.  Each context follows the rules above and you can return an array of these context stucts anywhere a `context` argument is accepted or from the `contextProvider` UDF.
+
+### Backwards Compat
+
+For backwards compatibility with older versions of the SDK, the following checks will be made:
+* If there is a `userProver` setting, it will be used instead of the `contextProvider` setting.
+* Any SDK method that accepts a `context` parameter, will use a `user` parameter first if it is provided as the context.
 
 ## Listening for flag changes
 
@@ -267,7 +269,7 @@ Note, for older versions of Adobe ColdFusion, you'll need to use this closure sy
         {
             featureKey : 'another-feature',
             udf : function( oldValue, newValue ){
-                
+
             }
         }
     ]
