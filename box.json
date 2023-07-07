@@ -23,7 +23,7 @@
     "shortDescription":"CFML SDK for LaunchDarkly",
     "type":"modules",
     "author":"Brad Wood",
-    "version":"1.5.3",
+    "version":"2.0.0-beta",
     "ignore":[
         "**/.*",
         "/tests",
