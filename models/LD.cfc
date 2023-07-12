@@ -215,6 +215,10 @@ component accessors=true singleton {
             } else {
                 contextProps = settings.contextProvider();
             }
+            if( isArray( contextProps ) ) {
+                // Build each struct into an array and then assemble a multi-context from them
+                return LDContext.createMulti( contextProps.map( (c)=>buildLDContext( c ) ) );
+            }
         }
 
         if( contextProps.count() && !contextProps.keyExists( 'key' ) ) {
