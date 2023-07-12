@@ -203,22 +203,20 @@ component accessors=true singleton {
     */
     private function buildLDContext( any contextProps={} ) {
 
-        if( isArray( contextProps ) ) {
-            // Build each struct into an array and then assemble a multi-context from them
-            return LDContext.createMulti( contextProps.map( (c)=>buildLDContext( c ) ) );
-        }
-
-        if( isNull( contextProps ) || !contextProps.count() ) {
+        // If there is no context provided, or it is empty, check for a context provider.
+        if( isNull( contextProps ) || ( isStruct( contextProps ) && !contextProps.count() ) ) {
             // Backwards compat for old closure name
             if( !isNull( settings.userProvider ) ) {
                 contextProps = settings.userProvider();
             } else {
                 contextProps = settings.contextProvider();
             }
-            if( isArray( contextProps ) ) {
-                // Build each struct into an array and then assemble a multi-context from them
-                return LDContext.createMulti( contextProps.map( (c)=>buildLDContext( c ) ) );
-            }
+        }
+
+        // Now that we have a context, check if it is a mulit-context
+        if( isArray( contextProps ) ) {
+            // Build each struct into an array and then assemble a multi-context from them
+            return LDContext.createMulti( contextProps.map( (c)=>buildLDContext( c ) ) );
         }
 
         if( contextProps.count() && !contextProps.keyExists( 'key' ) ) {
