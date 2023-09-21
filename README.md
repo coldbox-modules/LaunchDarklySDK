@@ -219,6 +219,18 @@ All keys other than `key` and `kind` will be added as custom properties.  Comple
 
 You can also use LaunchDarkly's multi-context features by specifying an array of context structs.  Each context follows the rules above and you can return an array of these context stucts anywhere a `context` argument is accepted or from the `contextProvider` UDF.
 
+### Protecting Sensitive User/Context Information
+While the LaunchDarkly SDK does not send context information to the LaunchDarkly service in order to perform the flag evaluations (this is done locally inside of the instantiated SDK), it does transmit flag and user/context information back after the fact for observability and analytics purposes.  This can be a problem if you are planning on using sensitive information that could be consider sensitive or personal identifiable information (like email address or user role).
+
+To address this, the SDK allows you to mark user/context attributes as `private`.  Private attributes may still be used for targeting purposes, but will not be sent back to the LaunchDarkly service.
+
+To exclude user/context attributes as private, append the `privateAttributes` key to your context structure.  This attribute accepts an array of property names (strings) to exclude.  
+
+For example:
+```
+
+```
+
 ### Backwards Compat
 
 For backwards compatibility with older versions of the SDK, the following checks will be made:

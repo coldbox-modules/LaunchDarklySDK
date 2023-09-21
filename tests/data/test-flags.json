@@ -125,7 +125,24 @@
                 }
             ],
             "contextTargets": [],
-            "rules": [],
+            "rules": [
+                {
+                    "variation": 1,
+                    "clauses": [
+                        {
+                            "attribute": "privateField2",
+                            "op": "in",
+                            "values": [
+                                "dontSendToLD"
+                            ],
+                            "contextKind": "user",
+                            "negate": false
+                        }
+                    ],
+                    "trackEvents": false,
+                    "description": "Rule targeting a private attribute"
+                }
+            ],
             "fallthrough": {
                 "variation": 0
             },
