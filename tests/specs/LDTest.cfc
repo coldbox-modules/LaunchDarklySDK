@@ -155,7 +155,7 @@ component extends="testbox.system.BaseSpec"{
 						'privateAttributes' : ["privateField1", "privateField2"]
 					}
 
-					// validate that we can build the context object with certaiun attributes marked as private
+					// validate that we can build the context object with certain attributes marked as private
 					makePublic(LD, "buildLDContext");
 					var resultContext = LD.buildLDContext( contextWithPrivateValues );
 					expect( resultContext.getPrivateAttributeCount() ).toBe( 2 );
@@ -216,8 +216,6 @@ component extends="testbox.system.BaseSpec"{
 					} );
 
 				});
-
-
 
 
 				describe("Deprecated User Operations", function() {

@@ -247,7 +247,7 @@ component accessors=true singleton {
             }
 
             /* A note about handling private attriubtes in LaunchDarkly:
-               LD supports the abilityh to define context properties/attributes as "private"
+               LD supports the ability to define context properties/attributes as "private"
                this means that these attributes may be used for targeting purposes but will
                not be sent to LaunchDarkly as part of it's SDK telemetry and analytics data.
                This is meant to allow us to use context attributes that include PII (like email)
