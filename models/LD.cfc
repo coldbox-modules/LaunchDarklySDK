@@ -246,6 +246,21 @@ component accessors=true singleton {
                 contextProps['ip'] = CGI.REMOTE_ADDR;
             }
 
+            /* A note about handling private attriubtes in LaunchDarkly:
+               LD supports the ability to define context properties/attributes as "private"
+               this means that these attributes may be used for targeting purposes but will
+               not be sent to LaunchDarkly as part of it's SDK telemetry and analytics data.
+               This is meant to allow us to use context attributes that include PII (like email)
+               without having it reside in LaunchDarkly's context database.  To mark an attribute
+               as private, provide an additional context property called `privateAttributes` that 
+               includes an array of property names to be treated as private */
+            var privateAttributes = [];
+            if ( contextProps.keyExists("privateAttributes") && isArray(contextProps.privateAttributes) ) {
+                privateAttributes = contextProps.privateAttributes;
+                context.privateAttributes( javaCast('string[]', privateAttributes) );
+                contextProps.delete( "privateAttributes" );
+            }
+            
             // All aditional properties are custom fields
             if( settings.contextExplodeStructAttributes ) {
                 storeCustomcontextAttributeLegacy( '', contextProps, context );

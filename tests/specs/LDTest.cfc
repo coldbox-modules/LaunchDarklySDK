@@ -146,6 +146,25 @@ component extends="testbox.system.BaseSpec"{
 					] );
 				});
 
+				it("can protect specified context attributes as private", function(){
+
+					var contextWithPrivateValues = {
+						'key' : 'custom-context-info',
+						'privateField1' : 'mySecretValue',  
+						'privateField2' : 'dontSendToLD',
+						'privateAttributes' : ["privateField1", "privateField2"]
+					}
+
+					// validate that we can build the context object with certain attributes marked as private
+					makePublic(LD, "buildLDContext");
+					var resultContext = LD.buildLDContext( contextWithPrivateValues );
+					expect( resultContext.getPrivateAttributeCount() ).toBe( 2 );
+
+					// validate that targeting rules still work with the private attribute
+					expect( LD.stringVariation( 'string-feature-with-targeting', 'fallback-variation', contextWithPrivateValues ) ).toBe( 'Targeted Variation' );
+
+				});
+
 				it("will reject invalid context", function(){
 
 					expect( ()=>LD.identifyContext( { key:'Luis', kind:'kind' } ) )

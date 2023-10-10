@@ -2,3 +2,5 @@
 /.env
 /testbox/
 /.vscode/
+
+tests/specs/LDTestLive.cfc

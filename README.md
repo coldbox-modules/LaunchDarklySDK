@@ -122,7 +122,8 @@ Here's a list of the currently-support config items.  These can go in your `/con
                     'key' : session.user.id,
                     'name' : session.user.fullname,
                     'email' : session.user.email,
-                    'country' : session.user.country
+                    'country' : session.user.country,
+                    'privateAttributes' : ['email']
                 };
             } else {
                 // Anonymous
@@ -210,14 +211,40 @@ var flagData = LD.getAllFlags( { key : 'luis-majano' } )
 ```
 However, the recommended approach is to use the `contextProvider` setting for the library which allows you to set a single UDF that returns all the details for whatever context is currently logged in.  In this way, you can have that logic all in one place, pulling from the session scope, or wherever you track the current context.  Returning an empty struct from your `contextProvider` UDF will create an "anonymous" context.
 
+There are 3 "reserved" structure key names for context structures to be aware of: `key`, `kind`, and `privateAttributes`.
 
-The only required key in your struct is `key` which needs to be unique to each context.  In the case of a user context, it should ideally be the primary key of your users table.
+The only required key in your struct is `key` which needs to be unique to each context.  In the case of a user context, it should be a value that uniquely identifies the current user (e.g. the primary key of your users table).
 
-You can also include a key named `kind` which defaults to "user", which is the legacy behavior of the SDK.  Any other custom string is allowed, so long as it is not the word "kind", "multi", and contains only letters, numbers, and ".", "-", "_".  Examples of non-user contexts would be device, organization, or location and would provide another way to create cross-cutting targeting of your users.
+You can also include a key named `kind` which defaults to "user", which is the legacy behavior of the SDK.  Any other custom string is allowed, so long as it is not the word "kind", "multi", and contains only letters, numbers, and ".", "-", "_".  Examples of non-user contexts would be device, organization, or location and would provide another way to create cross-cutting targeting of your users. See https://docs.launchdarkly.com/guides/flags/intro-contexts for more information
 
-All keys other than `key` and `kind` will be added as custom properties.  Complex values will be serialized to JSON and added as an LDValue.  You can include anything you want here including the user's role, status, preferences, etc.  This data will be available in LaunchDarkly to create segments out of so you can target very specific groups of contexts such as "All admin users in Florida with purchases in the last 6 months".
+The `privateAttributes` key allows you to protect certain context keys from being sent to (and recorded by) LaunchDarkly.  See the 'Protecting Sensitive User/Context Information' below for more information.
+
+All structure keys other than `key`, `kind`, and `privateAttributes` will be added as custom properties for your context.  Complex values will be serialized to JSON and added as an LDValue.  You can include anything you want here including the user's role, status, preferences, etc.  Any custom properties not flagged as `private` data will be available to browse/auto-suggest in the LaunchDarkly admin UI to create segments out of so you can target very specific groups of contexts such as "All admin users in Florida with purchases in the last 6 months" (note: you may still create targeting rules / segments using `private` attributes but you will not receive the benefit of the auto-suggest / browse functionality).
 
 You can also use LaunchDarkly's multi-context features by specifying an array of context structs.  Each context follows the rules above and you can return an array of these context stucts anywhere a `context` argument is accepted or from the `contextProvider` UDF.
+
+### Protecting Sensitive User/Context Information
+
+While the LaunchDarkly SDK does not send user/context information to the LaunchDarkly service in order to perform the flag evaluations (this is done locally inside of the instantiated SDK object), it does transmit flag and user/context information (after the fact) to LaunchDarkly for observability and analytics purposes.  This can be a problem if you are planning on using/targeting attributes that could be considered sensitive or personal identifiable information (like email address, ip address, or user role).
+
+To address this, the SDK allows you to mark user/context attributes as `private`.  Private attributes may still be used for targeting purposes, but will not be sent back to the LaunchDarkly service.
+
+To exclude user/context attributes as private, append a specific key (`privateAttributes`) to your user/context structure.  This attribute accepts an array of property names (strings) to mark as `private`.  
+
+For example:
+```js
+/* Note: This example shows how to use the `privateAttributes` key when passing the context object during flag evaluation (See 'Context Tracking' above).  If you are using the contextProvider() method, you would add a `privateAttributes` key to the structure that is output from that method (see example in 'Configuration' above)
+*/
+var myContextStruct = {
+    'key' : 'user-12345',
+    'email' : 'user@example.com',  
+    'ip' : '127.0.0.1',
+    'privateAttributes' : ["email", "ip"]
+}
+var results = LD.booleanVariationDetail( 'feature-that-targets-email', false, myContextStruct );
+```
+
+In the example above, LaunchDarkly account admins can create targeting rules in the LaunchDarkly Admin UI that delivers a specific variation to users whose email address match `user@example.com` (or that ends in the `@example.com` domain), but viewing the user/context record inside of the LaunchDarkly admin UI will not display the value of these attributes, thus allowing you to protect sensitive user/context information
 
 ### Backwards Compat
 
