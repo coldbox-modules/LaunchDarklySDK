@@ -1,0 +1,8 @@
+{
+    "name":"LaunchDarklySDK",
+    "app":{
+        "cfengine":"${LDM_CFML_SERVER_ENGINE:lucee@5}"
+    },
+    "openBrowser":true,
+    "openBrowserURL":"/tests/runner.cfm"
+}
