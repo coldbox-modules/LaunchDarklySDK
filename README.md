@@ -351,3 +351,39 @@ var isDead = LD.isOffline();
 // Flush all events to the web dashboard
 LD.flush();
 ```
+## Contributing
+In you are interested in contributing to this module, this section outlines the process to get started:
+
+### Before you begin
+You will need: 
+* Access to a CommandBox instance (https://www.ortussolutions.com/products/commandbox) to run the test suite for the modules
+* a GitHub.com user account that you can use to open Pull Requests to submit changes to the source code repository.
+
+### Set up your development environment
+1. Create a fork of the LaunchDarklySDK repository in GitHub (https://github.com/coldbox-modules/LaunchDarklySDK)
+2. Clone a copy of your fork of the repository to a working copy on your machine
+3. Open the folder containing your working copy of the project in CommandBox or your command line tool of choice
+4. Install the module's dependencies using the CLI command `box install` (note if you are running this command inside of CommandBox's built-in CLI you can exclude the `box` prefix)
+
+### Running the module test suite
+The expectations for this module are that all tests return successful for the automated testbox test suite included in this project.  Any changes to the project should include corresponding changes to the test suite as well.
+
+1. Using CommandBox (or your Command Line Interface tool of choice), navigate to the working copy of this project.
+2. Start up a temporary server to use to run the project's test suite using the command `box server start` (note if you are running this command inside of CommandBox's built-in CLI you can exclude the `box` prefix)
+3. Wait until the server starts up and it should automatically open a browser window to the project's test suite.  If the browser does not open automatically, you can navigate to the test suite manually by opening the `http://{serverHost}:{serverPort}/tests/runner.cfm` URL in a browser.
+4. All tests should initially be returning successful - please be sure to re-run the test suite before submitting a pull request for any changes and ensure that all tests are passing.
+
+### Running the test suite in different CFML engines
+By default, the temporary test suite server starts up using the latest version of the Lucee v5 CFML engine.  You can change which CFML engine is used to run the tests via the environment variable LDM_CFML_SERVER_ENGINE prior to starting the server
+
+for example:
+``` bash
+SET LDM_CFML_SERVER_ENGINE=adobe@2023
+box server start
+
+# or 
+SET LDM_CFML_SERVER_ENGINE=lucee@5
+box server start
+```
+### Submitting your changes
+Submit your changes for review by opening up a pull request of your fork to the main repository in GitHub.com
